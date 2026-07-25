@@ -90,7 +90,7 @@ class ResearchServiceTests(unittest.TestCase):
         markdown = render_markdown_report(self.service.create_report("로봇", 1))
 
         self.assertIn("## 1. 빠른 요약", markdown)
-        self.assertIn("## 8. 안내 문구", markdown)
+        self.assertIn("## 11. 안내 문구", markdown)
         self.assertIn("확인 불가", markdown)
 
 

@@ -121,6 +121,38 @@ class NewsDisclosureItem:
 
 
 @dataclass(frozen=True)
+class USMarketReference:
+    theme: str
+    trend: str
+    background: str
+    representative_companies: tuple[str, ...]
+    representative_etfs: tuple[str, ...]
+    news_summary: str
+    as_of: date | None
+    sources: tuple[SourceRecord, ...]
+
+
+@dataclass(frozen=True)
+class USPeerCompany:
+    name: str
+    ticker: str
+    related_business: str
+    connection: str
+    relevance: Relevance
+    sources: tuple[SourceRecord, ...]
+
+
+@dataclass(frozen=True)
+class AssetManagerReference:
+    manager: str
+    etf_or_holding: str
+    public_view: str
+    recent_activity: str
+    as_of: date | None
+    sources: tuple[SourceRecord, ...]
+
+
+@dataclass(frozen=True)
 class ResearchReport:
     request: ResearchRequest
     generated_at: datetime
@@ -132,6 +164,9 @@ class ResearchReport:
     disclaimer: str
     price_volume_metrics: tuple[PriceVolumeMetrics, ...] = ()
     risks: tuple[RiskItem, ...] = ()
+    us_market_reference: USMarketReference | None = None
+    us_peer_companies: tuple[USPeerCompany, ...] = ()
+    asset_manager_references: tuple[AssetManagerReference, ...] = ()
 
     def to_dict(self) -> dict:
         """API 응답과 Markdown 렌더링에 사용할 수 있는 직렬화 결과."""

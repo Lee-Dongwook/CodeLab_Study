@@ -6,6 +6,8 @@ from typing import Sequence
 from app.data_sources.dart import DartCompanyOverview, DartDisclosureClient, DartDisclosureQuery
 from app.data_sources.dart_corporation_registry import DartCorporationRegistry
 from app.data_sources.naver_market import NaverMarketDataClient
+from app.data_sources.openai_theme import OpenAIThemeCandidateFinder, ThemeCandidateSuggestion
+from app.data_sources.openai_references import OpenAIReferenceResearcher, ReferenceBundle
 from app.models.domain import DomesticCandidate, DomesticMetrics, DomesticCompanyIdentity, NewsDisclosureItem, PriceVolumeMetrics, SourceRecord, ThemeDefinition, ThemeEvidence
 from app.models.errors import DartApiError, PublicDataUnavailableError, ThemeDefinitionUnavailableError
 from app.services.price_volume_service import calculate_price_volume_metrics
@@ -50,18 +52,68 @@ class DartCompanyResearchDataSource:
         registry: DartCorporationRegistry,
         dart_client: DartDisclosureClient,
         market_client: NaverMarketDataClient | None = None,
+        theme_candidate_finder: OpenAIThemeCandidateFinder | None = None,
     ) -> None:
         self._registry = registry
         self._dart_client = dart_client
         self._market_client = market_client or NaverMarketDataClient()
+        self._theme_candidate_finder = theme_candidate_finder
+        self._theme_suggestions: dict[str, tuple[ThemeCandidateSuggestion, ...]] = {}
         self._theme_service = ThemeDefinitionService(
             DartCompanyThemeEvidenceProvider(dart_client), registry
         )
 
     def define_theme(self, theme_or_company: str) -> ThemeDefinition:
-        return self._theme_service.define(theme_or_company)
+        if self._registry.resolve(theme_or_company) is not None:
+            return self._theme_service.define(theme_or_company)
+        finder = self._theme_candidate_finder or OpenAIThemeCandidateFinder.from_environment()
+        suggestions = finder.find_candidates(theme_or_company, limit=5)
+        resolved = [
+            suggestion
+            for suggestion in suggestions
+            if self._registry.resolve(suggestion.company_name) is not None
+        ]
+        if not resolved:
+            raise ThemeDefinitionUnavailableError("DART 상장 종목으로 확인된 테마 후보가 없습니다.")
+        sources = []
+        for suggestion in resolved:
+            company = self._registry.resolve(suggestion.company_name)
+            if company and company.corp_code:
+                sources.append(_overview_source(self._dart_client.get_company_overview(company.corp_code)))
+        if not sources:
+            raise ThemeDefinitionUnavailableError("테마 후보의 공식 기업 자료를 확인하지 못했습니다.")
+        self._theme_suggestions[theme_or_company] = tuple(resolved)
+        return ThemeDefinition(
+            name=theme_or_company,
+            description=f"{theme_or_company} 관련 국내 상장 보통주 후보를 사업 연관성 기준으로 비교합니다.",
+            inclusion_criteria="OpenAI 후보 탐색 후 DART 고유번호 목록에서 국내 상장 종목으로 확인되고, 기업 공식 자료가 연결된 종목",
+            exclusion_criteria="ETF·ETN·우선주·SPAC·OTC, DART 상장 종목으로 확인되지 않은 후보",
+            direct_relevance_criteria="테마의 제품·서비스 또는 핵심 사업을 직접 제공하는 기업",
+            indirect_relevance_criteria="부품·장비·소프트웨어 등 테마 가치사슬에 간접적으로 연결된 기업",
+            sources=tuple(sources),
+        )
 
     def find_domestic_candidates(self, theme: ThemeDefinition) -> Sequence[DomesticCandidate]:
+        if theme.name in self._theme_suggestions:
+            candidates = []
+            for suggestion in self._theme_suggestions[theme.name]:
+                company = self._registry.resolve(suggestion.company_name)
+                if company is None or company.corp_code is None:
+                    continue
+                overview = self._dart_client.get_company_overview(company.corp_code)
+                candidates.append(
+                    DomesticCandidate(
+                        name=company.name,
+                        code=company.stock_code,
+                        exchange="KRX",
+                        security_type="COMMON_STOCK",
+                        related_business=suggestion.related_business or f"OpenDART 기업개황 업종코드: {overview.industry_code or '미확인'}",
+                        relevance="direct" if suggestion.relevance == "direct" else "indirect",
+                        selection_reason=suggestion.selection_reason or "OpenAI 테마 후보 탐색 후 DART 상장 종목으로 확인",
+                        sources=(_overview_source(overview),),
+                    )
+                )
+            return candidates
         company = self._registry.resolve(theme.name)
         if company is None or company.corp_code is None:
             raise ThemeDefinitionUnavailableError("입력한 국내 상장 종목을 확인하지 못했습니다.")
@@ -144,6 +196,9 @@ class DartCompanyResearchDataSource:
             ),
             limit=limit,
         )
+
+    def get_references(self, theme: ThemeDefinition, candidates: Sequence[DomesticCandidate]) -> ReferenceBundle:
+        return OpenAIReferenceResearcher.from_environment().research(theme.name, candidates)
 
 
 def _overview_source(overview: DartCompanyOverview) -> SourceRecord:

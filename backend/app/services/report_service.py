@@ -58,12 +58,33 @@ def render_markdown_report(report: ResearchReport) -> str:
     else:
         lines.append("- 확인 가능한 최근 뉴스 또는 공시가 없습니다.")
 
-    lines.extend(["", "## 7. 참고자료 및 출처"])
+    lines.extend(["", "## 7. 미국 시장 선행 동향 (참고)"])
+    if report.us_market_reference:
+        reference = report.us_market_reference
+        lines.extend([f"- 기준일: {_display(reference.as_of)}", f"- 동향: {reference.trend}", f"- 배경: {reference.background}", f"- 대표 종목: {', '.join(reference.representative_companies) or '확인 가능한 자료 없음'}", f"- 대표 ETF: {', '.join(reference.representative_etfs) or '확인 가능한 자료 없음'}", f"- 뉴스 요약: {reference.news_summary}"])
+    else:
+        lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
+
+    lines.extend(["", "## 8. 관련 미국 Peer Company (참고)"])
+    if report.us_peer_companies:
+        for peer in report.us_peer_companies:
+            lines.append(f"- {peer.name} ({peer.ticker}) | {peer.related_business} | {peer.connection} | {peer.relevance}")
+    else:
+        lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
+
+    lines.extend(["", "## 9. 글로벌 운용사 동향 (참고)"])
+    if report.asset_manager_references:
+        for manager in report.asset_manager_references:
+            lines.append(f"- {manager.manager} | {manager.etf_or_holding} | {manager.public_view} | {manager.recent_activity} | {_display(manager.as_of)}")
+    else:
+        lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
+
+    lines.extend(["", "## 10. 참고자료 및 출처"])
     for source in report.sources:
         published = source.published_at.isoformat() if source.published_at else "발행일 미확인"
         lines.append(f"- {source.title} | {source.publisher} | {published} | {source.url}")
 
-    lines.extend(["", "## 8. 안내 문구", report.disclaimer])
+    lines.extend(["", "## 11. 안내 문구", report.disclaimer])
     return "\n".join(lines)
 
 
