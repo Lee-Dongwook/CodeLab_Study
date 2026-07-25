@@ -86,7 +86,28 @@ export function ResearchPage() {
             <NewsDisclosureSection items={report.news_disclosures} />
           </section>
           <section>
-            <h2>7. 참고자료 및 출처</h2>
+            <h2>7. 미국 시장 선행 동향 (참고)</h2>
+            {report.us_market_reference ? (
+              <div>
+                <p><strong>기준일:</strong> {report.us_market_reference.as_of ?? "확인 불가"}</p>
+                <p><strong>동향:</strong> {report.us_market_reference.trend}</p>
+                <p><strong>배경:</strong> {report.us_market_reference.background}</p>
+                <p><strong>대표 종목:</strong> {report.us_market_reference.representative_companies.join(", ") || "확인 가능한 자료 없음"}</p>
+                <p><strong>대표 ETF:</strong> {report.us_market_reference.representative_etfs.join(", ") || "확인 가능한 자료 없음"}</p>
+                <p><strong>뉴스 요약:</strong> {report.us_market_reference.news_summary}</p>
+              </div>
+            ) : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
+          </section>
+          <section>
+            <h2>8. 관련 미국 Peer Company (참고)</h2>
+            {report.us_peer_companies.length ? <ul>{report.us_peer_companies.map((peer) => <li key={peer.ticker}><strong>{peer.name} ({peer.ticker})</strong>: {peer.related_business} — {peer.connection} ({peer.relevance === "direct" ? "직접 관련" : "간접 관련"})</li>)}</ul> : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
+          </section>
+          <section>
+            <h2>9. 글로벌 운용사 동향 (참고)</h2>
+            {report.asset_manager_references.length ? <ul>{report.asset_manager_references.map((manager) => <li key={manager.manager}><strong>{manager.manager}</strong>: {manager.etf_or_holding} / {manager.public_view} / {manager.recent_activity} ({manager.as_of ?? "기준일 미확인"})</li>)}</ul> : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
+          </section>
+          <section>
+            <h2>10. 참고자료 및 출처</h2>
             <SourceList sources={report.sources} />
           </section>
           <footer>

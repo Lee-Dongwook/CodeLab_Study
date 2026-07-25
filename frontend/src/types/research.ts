@@ -63,6 +63,32 @@ export interface NewsDisclosureItem {
   published_at: string | null;
 }
 
+export interface USMarketReference {
+  theme: string;
+  trend: string;
+  background: string;
+  representative_companies: string[];
+  representative_etfs: string[];
+  news_summary: string;
+  as_of: string | null;
+}
+
+export interface USPeerCompany {
+  name: string;
+  ticker: string;
+  related_business: string;
+  connection: string;
+  relevance: Relevance;
+}
+
+export interface AssetManagerReference {
+  manager: string;
+  etf_or_holding: string;
+  public_view: string;
+  recent_activity: string;
+  as_of: string | null;
+}
+
 export interface ResearchReport {
   generated_at: string;
   theme_definition: ThemeDefinition;
@@ -73,4 +99,7 @@ export interface ResearchReport {
   news_disclosures: NewsDisclosureItem[];
   sources: SourceRecord[];
   disclaimer: string;
+  us_market_reference: USMarketReference | null;
+  us_peer_companies: USPeerCompany[];
+  asset_manager_references: AssetManagerReference[];
 }
