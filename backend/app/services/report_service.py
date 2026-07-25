@@ -68,15 +68,15 @@ def render_markdown_report(report: ResearchReport) -> str:
 
 
 def _metrics_table(metrics: tuple[DomesticMetrics, ...]) -> str:
-    header = "| 종목코드 | 최근 종가 | 시가총액 | PER | PBR | 매출 성장률 | 영업이익률 |"
-    divider = "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"
+    header = "| 종목코드 | 최근 종가 | 시가총액 | PER | PBR | 매출 성장률 | 영업이익률 | 시장 기준일 | 재무 기준 기간 |"
+    divider = "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |"
     if not metrics:
-        return "\n".join([header, divider, "| 확인 가능한 지표 없음 | - | - | - | - | - | - |"])
+        return "\n".join([header, divider, "| 확인 가능한 지표 없음 | - | - | - | - | - | - | - | - |"])
 
     rows = [header, divider]
     for metric in metrics:
         rows.append(
-            "| {code} | {close} | {cap} | {per} | {pbr} | {growth} | {margin} |".format(
+            "| {code} | {close} | {cap} | {per} | {pbr} | {growth} | {margin} | {market_date} | {financial_period} |".format(
                 code=metric.candidate_code,
                 close=_display(metric.close_price),
                 cap=_display(metric.market_cap),
@@ -84,6 +84,8 @@ def _metrics_table(metrics: tuple[DomesticMetrics, ...]) -> str:
                 pbr=_display(metric.pbr),
                 growth=_display(metric.revenue_growth),
                 margin=_display(metric.operating_margin),
+                market_date=_display(metric.market_data_as_of),
+                financial_period=_display(metric.financial_period),
             )
         )
     return "\n".join(rows)
@@ -95,19 +97,20 @@ def _display(value: int | float | None) -> str:
 
 def _price_volume_table(metrics: tuple[PriceVolumeMetrics, ...]) -> str:
     rows = [
-        "| 종목코드 | 기준 기간 | 기간 수익률 | 변동성 | 거래량 변화 | 거래량 급증 여부 |",
-        "| --- | --- | ---: | ---: | ---: | --- |",
+        "| 종목코드 | 기준 기간 | 기간 수익률 | 변동성 | 거래량 변화 | 거래량 급증 여부 | 기준일 |",
+        "| --- | --- | ---: | ---: | ---: | --- | --- |",
     ]
     for metric in metrics:
         surge = "확인 불가" if metric.volume_surge is None else ("예" if metric.volume_surge else "아니오")
         rows.append(
-            "| {code} | {period} | {return_} | {volatility} | {volume_change} | {surge} |".format(
+            "| {code} | {period} | {return_} | {volatility} | {volume_change} | {surge} | {as_of} |".format(
                 code=metric.candidate_code,
                 period=metric.analysis_period,
                 return_=_display(metric.period_return),
                 volatility=_display(metric.volatility),
                 volume_change=_display(metric.volume_change),
                 surge=surge,
+                as_of=_display(metric.data_as_of),
             )
         )
     return "\n".join(rows)

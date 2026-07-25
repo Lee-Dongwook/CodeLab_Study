@@ -5,8 +5,10 @@ from typing import Sequence
 
 from app.data_sources.dart import DartCompanyOverview, DartDisclosureClient, DartDisclosureQuery
 from app.data_sources.dart_corporation_registry import DartCorporationRegistry
-from app.models.domain import DomesticCandidate, DomesticMetrics, DomesticCompanyIdentity, NewsDisclosureItem, SourceRecord, ThemeDefinition, ThemeEvidence
-from app.models.errors import ThemeDefinitionUnavailableError
+from app.data_sources.naver_market import NaverMarketDataClient
+from app.models.domain import DomesticCandidate, DomesticMetrics, DomesticCompanyIdentity, NewsDisclosureItem, PriceVolumeMetrics, SourceRecord, ThemeDefinition, ThemeEvidence
+from app.models.errors import DartApiError, PublicDataUnavailableError, ThemeDefinitionUnavailableError
+from app.services.price_volume_service import calculate_price_volume_metrics
 from app.services.theme_definition_service import ThemeDefinitionService
 
 
@@ -43,9 +45,15 @@ class DartCompanyThemeEvidenceProvider:
 class DartCompanyResearchDataSource:
     """국내 상장 기업명 입력에 대한 DART 기반 최소 리서치 데이터 소스."""
 
-    def __init__(self, registry: DartCorporationRegistry, dart_client: DartDisclosureClient) -> None:
+    def __init__(
+        self,
+        registry: DartCorporationRegistry,
+        dart_client: DartDisclosureClient,
+        market_client: NaverMarketDataClient | None = None,
+    ) -> None:
         self._registry = registry
         self._dart_client = dart_client
+        self._market_client = market_client or NaverMarketDataClient()
         self._theme_service = ThemeDefinitionService(
             DartCompanyThemeEvidenceProvider(dart_client), registry
         )
@@ -73,8 +81,53 @@ class DartCompanyResearchDataSource:
         ]
 
     def get_domestic_metrics(self, candidate: DomesticCandidate) -> DomesticMetrics | None:
-        # 시장·재무 데이터 제공처 연결 전에는 지표를 생성하지 않는다.
-        return None
+        company = self._registry.resolve(candidate.code)
+        sources: list[SourceRecord] = []
+        try:
+            market = self._market_client.get_snapshot(candidate.code)
+            sources.append(market.source)
+            market_points = self._market_client.get_price_volume_points(candidate.code, trading_days=60)
+            market_data_as_of = market_points[-1].traded_on if market_points else market.as_of
+        except PublicDataUnavailableError:
+            market = None
+            market_data_as_of = None
+
+        try:
+            financial = (
+                self._dart_client.get_latest_annual_financial_metrics(company.corp_code)
+                if company and company.corp_code
+                else None
+            )
+            if financial:
+                sources.append(financial.source)
+        except DartApiError:
+            financial = None
+
+        return DomesticMetrics(
+            candidate_code=candidate.code,
+            close_price=market.close_price if market else None,
+            market_cap=market.market_cap if market else None,
+            per=market.per if market else None,
+            pbr=market.pbr if market else None,
+            revenue_growth=financial.revenue_growth if financial else None,
+            operating_margin=financial.operating_margin if financial else None,
+            market_data_as_of=market_data_as_of,
+            financial_period=financial.financial_period if financial else None,
+            sources=tuple(sources),
+        )
+
+    def get_price_volume_metrics(self, candidate: DomesticCandidate) -> PriceVolumeMetrics:
+        try:
+            points = self._market_client.get_price_volume_points(candidate.code, trading_days=60)
+        except PublicDataUnavailableError:
+            points = ()
+        return calculate_price_volume_metrics(
+            candidate.code,
+            points,
+            analysis_period="최근 60거래일",
+            annualization_days=252,
+            volume_surge_threshold=2.0,
+        )
 
     def get_news_disclosures(self, candidate: DomesticCandidate, limit: int) -> Sequence[NewsDisclosureItem]:
         company = self._registry.resolve(candidate.code)

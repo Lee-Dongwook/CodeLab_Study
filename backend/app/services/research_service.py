@@ -31,6 +31,7 @@ class ResearchService:
             self._data_source.find_domestic_candidates(theme_definition), request.top_n
         )
         metrics = []
+        price_volume_metrics = []
         news_disclosures = []
         sources = list(theme_definition.sources)
 
@@ -40,6 +41,10 @@ class ResearchService:
             if metric is not None:
                 metrics.append(metric)
                 sources.extend(metric.sources)
+
+            get_price_volume_metrics = getattr(self._data_source, "get_price_volume_metrics", None)
+            if callable(get_price_volume_metrics):
+                price_volume_metrics.append(get_price_volume_metrics(candidate))
 
             items = self._data_source.get_news_disclosures(candidate, limit=3)
             news_disclosures.extend(items[:3])
@@ -54,6 +59,7 @@ class ResearchService:
             news_disclosures=tuple(news_disclosures),
             sources=tuple(_deduplicate_sources(sources)),
             disclaimer=_DISCLAIMER,
+            price_volume_metrics=tuple(price_volume_metrics),
         )
 
     @staticmethod

@@ -13,6 +13,7 @@ from app.models.domain import DomesticCandidate, NewsDisclosureItem, SourceRecor
 from app.models.errors import DartApiError, PublicDataUnavailableError
 
 _LIST_API_URL = "https://opendart.fss.or.kr/api/list.json"
+_FINANCIAL_ACCOUNTS_API_URL = "https://opendart.fss.or.kr/api/fnlttSinglAcnt.json"
 _DART_VIEWER_URL = "https://dart.fss.or.kr/dsaf001/main.do"
 
 
@@ -60,6 +61,14 @@ class DartCompanyOverview:
     industry_code: str | None
     homepage_url: str | None
     ir_url: str | None
+
+
+@dataclass(frozen=True)
+class DartFinancialMetrics:
+    revenue_growth: float | None
+    operating_margin: float | None
+    financial_period: str | None
+    source: SourceRecord
 
 
 class DartDisclosureClient:
@@ -131,6 +140,57 @@ class DartDisclosureClient:
             ir_url=_normalize_url(_blank_to_none(payload.get("ir_url"))),
         )
 
+    def get_latest_annual_financial_metrics(self, corp_code: str) -> DartFinancialMetrics | None:
+        """최근 확정 사업보고서의 연결 기준 매출·영업이익을 사용한다."""
+        for business_year in range(date.today().year - 1, date.today().year - 4, -1):
+            payload = self._request_json(
+                _FINANCIAL_ACCOUNTS_API_URL,
+                {"corp_code": corp_code, "bsns_year": str(business_year), "reprt_code": "11011"},
+                "OpenDART 재무제표를 조회하지 못했습니다.",
+            )
+            if payload.get("status") == "013":
+                continue
+            if payload.get("status") != "000":
+                continue
+
+            accounts = payload.get("list", [])
+            if not isinstance(accounts, list):
+                continue
+            revenue = _find_account(accounts, "매출액")
+            operating_income = _find_account(accounts, "영업이익")
+            if revenue is None or operating_income is None:
+                continue
+            current_revenue, previous_revenue = revenue
+            current_operating_income, _ = operating_income
+            if current_revenue is None:
+                continue
+            period = f"{business_year} 사업연도 (연결 기준)"
+            source = SourceRecord(
+                source_id=f"dart:financial:{corp_code}:{business_year}",
+                title=f"OpenDART 단일회사 주요계정 - {business_year} 사업연도",
+                publisher="OpenDART",
+                url="https://opendart.fss.or.kr/disclosureinfo/fnltt/singlacnt/main.do",
+                source_type="dart",
+            )
+            return DartFinancialMetrics(
+                revenue_growth=(current_revenue / previous_revenue - 1) * 100 if previous_revenue else None,
+                operating_margin=current_operating_income / current_revenue * 100,
+                financial_period=period,
+                source=source,
+            )
+        return None
+
+    def _request_json(self, base_url: str, params: Mapping[str, str], error_message: str) -> Mapping[str, Any]:
+        request_url = f"{base_url}?{urlencode({'crtfc_key': self._api_key, **params})}"
+        try:
+            with self._opener(request_url, timeout=self._timeout_seconds) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (OSError, ValueError, UnicodeDecodeError) as error:
+            raise DartApiError(error_message) from error
+        if not isinstance(payload, dict):
+            raise DartApiError("OpenDART 응답 형식이 올바르지 않습니다.")
+        return payload
+
     def get_candidate_disclosures(
         self,
         candidate: DomesticCandidate,
@@ -195,3 +255,20 @@ def _normalize_url(value: str | None) -> str | None:
     if value is None:
         return None
     return value if value.startswith(("http://", "https://")) else f"https://{value}"
+
+
+def _find_account(accounts: Sequence[Mapping[str, Any]], name: str) -> tuple[float | None, float | None] | None:
+    # 연결 재무제표(CFS)를 우선한다. 매출액 명칭이 다른 업종은 이후 확장한다.
+    matching = [account for account in accounts if account.get("account_nm") == name]
+    account = next((item for item in matching if item.get("fs_div") == "CFS"), None)
+    account = account or (matching[0] if matching else None)
+    if account is None:
+        return None
+    return _to_number(account.get("thstrm_amount")), _to_number(account.get("frmtrm_amount"))
+
+
+def _to_number(value: object) -> float | None:
+    try:
+        return float(str(value).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
