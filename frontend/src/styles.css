@@ -12,6 +12,11 @@ input, button { border-radius: 8px; border: 1px solid #d6dbea; padding: 10px 12p
 button { align-self: end; border: 0; background: #2449bf; color: #fff; font-weight: 700; cursor: pointer; }
 button:disabled { background: #8794bd; cursor: wait; }
 .error { margin-top: 16px; padding: 12px; color: #9b2020; background: #fff0f0; border-radius: 8px; }
+.dart-panel { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-top: 24px; padding: 20px; background: #eef3ff; border-radius: 12px; }
+.dart-panel h2 { margin-bottom: 6px; }
+.dart-panel p { margin: 0; }
+.dart-results { margin-top: 16px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px #1720330b; }
+.caption { margin-top: 0; color: #59657e; font-size: .9rem; }
 .report { display: grid; gap: 16px; margin-top: 24px; }
 .report section, .report footer { padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px #1720330b; }
 table { width: 100%; border-collapse: collapse; font-size: .9rem; }
@@ -23,4 +28,4 @@ th { white-space: nowrap; background: #f8f9fc; }
 .source-list small { display: block; color: #59657e; margin-top: 4px; }
 .tag { display: inline-block; margin-right: 8px; padding: 2px 6px; color: #3859c9; background: #eaf0ff; border-radius: 4px; font-size: .75rem; }
 a { color: #2449bf; }
-@media (max-width: 720px) { .page { margin: 24px auto; } .research-form { grid-template-columns: 1fr; } button { min-height: 42px; } }
+@media (max-width: 720px) { .page { margin: 24px auto; } .research-form { grid-template-columns: 1fr; } .dart-panel { align-items: stretch; flex-direction: column; } button { min-height: 42px; } }

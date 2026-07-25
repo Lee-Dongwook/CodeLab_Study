@@ -63,6 +63,17 @@ export interface NewsDisclosureItem {
   published_at: string | null;
 }
 
+export interface DartDisclosure {
+  corp_code: string;
+  corp_name: string;
+  stock_code: string;
+  report_nm: string;
+  rcept_no: string;
+  flr_nm: string;
+  rcept_dt: string;
+  rm: string;
+}
+
 export interface ResearchReport {
   generated_at: string;
   theme_definition: ThemeDefinition;

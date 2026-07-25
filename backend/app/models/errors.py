@@ -4,3 +4,7 @@ class InputValidationError(ValueError):
 
 class PublicDataUnavailableError(RuntimeError):
     """필수 공개 데이터 제공처를 사용할 수 없을 때 발생하는 오류."""
+
+
+class DartApiError(RuntimeError):
+    """OpenDART API 요청 또는 응답 오류."""

@@ -1,18 +1,24 @@
 import { useState } from "react";
 
+import { requestRecentDartDisclosures } from "../api/dart";
 import { requestResearch } from "../api/research";
 import { CandidateTable } from "../components/CandidateTable";
+import { DartDisclosureList } from "../components/DartDisclosureList";
 import { MetricsTable } from "../components/MetricsTable";
 import { NewsDisclosureSection } from "../components/NewsDisclosureSection";
 import { ResearchForm } from "../components/ResearchForm";
 import { RiskSection } from "../components/RiskSection";
 import { SourceList } from "../components/SourceList";
-import type { ResearchReport } from "../types/research";
+import type { DartDisclosure, ResearchReport } from "../types/research";
 
 export function ResearchPage() {
   const [report, setReport] = useState<ResearchReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [dartItems, setDartItems] = useState<DartDisclosure[] | null>(null);
+  const [dartRange, setDartRange] = useState<{ bgnDe: string; endDe: string } | null>(null);
+  const [dartError, setDartError] = useState<string | null>(null);
+  const [isDartLoading, setIsDartLoading] = useState(false);
 
   async function handleResearch(theme: string, topN: number) {
     setIsLoading(true);
@@ -32,6 +38,22 @@ export function ResearchPage() {
     }
   }
 
+  async function handleDartDisclosures() {
+    setIsDartLoading(true);
+    setDartError(null);
+    try {
+      const response = await requestRecentDartDisclosures();
+      setDartItems(response.items);
+      setDartRange({ bgnDe: response.bgn_de, endDe: response.end_de });
+    } catch (caughtError) {
+      setDartItems(null);
+      setDartRange(null);
+      setDartError(caughtError instanceof Error ? caughtError.message : "DART 공시 목록을 조회하지 못했습니다.");
+    } finally {
+      setIsDartLoading(false);
+    }
+  }
+
   return (
     <main className="page">
       <header>
@@ -44,6 +66,22 @@ export function ResearchPage() {
         <p className="error" role="alert">
           {error}
         </p>
+      )}
+      <section className="dart-panel">
+        <div>
+          <p className="eyebrow">PUBLIC DISCLOSURES</p>
+          <h2>최근 DART 공시 목록</h2>
+          <p>국내 후보 선정 전, OpenDART에서 제공하는 최근 공시를 확인할 수 있습니다.</p>
+        </div>
+        <button type="button" onClick={handleDartDisclosures} disabled={isDartLoading}>
+          {isDartLoading ? "공시 조회 중..." : "최근 공시 보기"}
+        </button>
+      </section>
+      {dartError && <p className="error" role="alert">{dartError}</p>}
+      {dartItems && dartRange && (
+        <section className="dart-results">
+          <DartDisclosureList items={dartItems} bgnDe={dartRange.bgnDe} endDe={dartRange.endDe} />
+        </section>
       )}
       {report && (
         <article className="report">

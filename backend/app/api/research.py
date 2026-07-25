@@ -21,7 +21,15 @@ class ResearchRequestBody(BaseModel):
 
 
 def get_research_service() -> ResearchService:
-    raise PublicDataUnavailableError("공개 데이터 제공처가 아직 연결되지 않았습니다.")
+    # Depends 단계의 일반 예외는 서버 500으로 변환되어 CORS 헤더가 누락될 수 있다.
+    # HTTPException으로 반환하면 CORS 미들웨어가 정상 응답에 허용 헤더를 추가한다.
+    raise HTTPException(
+        status_code=503,
+        detail=(
+            "국내 후보·정량 데이터 제공처가 아직 연결되지 않았습니다. "
+            "DART 공시 목록은 /dart/disclosures 엔드포인트에서 조회할 수 있습니다."
+        ),
+    )
 
 
 @router.post("")

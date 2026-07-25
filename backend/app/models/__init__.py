@@ -10,11 +10,12 @@ from .domain import (
     ThemeDefinition,
     RiskItem,
 )
-from .errors import InputValidationError, PublicDataUnavailableError
+from .errors import DartApiError, InputValidationError, PublicDataUnavailableError
 
 __all__ = [
     "DomesticCandidate",
     "DomesticMetrics",
+    "DartApiError",
     "InputValidationError",
     "NewsDisclosureItem",
     "PriceVolumeMetrics",
