@@ -75,7 +75,7 @@ class ResearchServiceTests(unittest.TestCase):
         self.service = ResearchService(FakePublicDataSource())
 
     def test_filters_non_common_stocks_and_prioritizes_direct_candidates(self) -> None:
-        report = self.service.create_report("로봇", 2)
+        report = self.service.create_report("로봇", 3)
 
         self.assertEqual([candidate.code for candidate in report.candidates], ["100001", "200002"])
         self.assertEqual(len(report.metrics), 2)
@@ -87,7 +87,7 @@ class ResearchServiceTests(unittest.TestCase):
         self.assertEqual(len(report.candidates), 2)
 
     def test_renders_required_phase_one_sections(self) -> None:
-        markdown = render_markdown_report(self.service.create_report("로봇", 1))
+        markdown = render_markdown_report(self.service.create_report("로봇", 3))
 
         self.assertIn("## 1. 빠른 요약", markdown)
         self.assertIn("## 11. 안내 문구", markdown)

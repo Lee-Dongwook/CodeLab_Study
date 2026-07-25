@@ -26,10 +26,11 @@ export function ResearchForm({ disabled, onSubmit }: ResearchFormProps) {
         />
       </label>
       <label>
-        최대 비교 종목 수
+        비교 종목 수 (3~5개)
         <input
           type="number"
-          min="1"
+          min="3"
+          max="5"
           value={topN}
           onChange={(event) => setTopN(Number(event.target.value))}
           required
