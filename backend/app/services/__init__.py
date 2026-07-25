@@ -3,6 +3,7 @@ from .price_volume_service import calculate_price_volume_metrics
 from .research_service import ResearchService
 from .report_service import render_markdown_report
 from .risk_service import validate_risk_items
+from .theme_definition_service import ThemeDefinitionService, normalize_theme_input
 
 __all__ = [
     "ResearchService",
@@ -10,4 +11,6 @@ __all__ = [
     "render_markdown_report",
     "validate_request",
     "validate_risk_items",
+    "ThemeDefinitionService",
+    "normalize_theme_input",
 ]

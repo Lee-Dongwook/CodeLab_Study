@@ -18,9 +18,12 @@ def render_markdown_report(report: ResearchReport) -> str:
         "",
         f"- 포함 기준: {report.theme_definition.inclusion_criteria}",
         f"- 제외 기준: {report.theme_definition.exclusion_criteria}",
-        "",
-        "## 3. 국내 후보 종목 및 선정 근거",
     ]
+    if report.theme_definition.direct_relevance_criteria:
+        lines.append(f"- 직접 관련 기준: {report.theme_definition.direct_relevance_criteria}")
+    if report.theme_definition.indirect_relevance_criteria:
+        lines.append(f"- 간접 관련 기준: {report.theme_definition.indirect_relevance_criteria}")
+    lines.extend(["", "## 3. 국내 후보 종목 및 선정 근거"])
     if report.candidates:
         for candidate in report.candidates:
             relevance = "직접 관련" if candidate.relevance == "direct" else "간접 관련"

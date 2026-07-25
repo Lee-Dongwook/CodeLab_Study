@@ -34,6 +34,26 @@ class ThemeDefinition:
     inclusion_criteria: str
     exclusion_criteria: str
     sources: tuple[SourceRecord, ...]
+    direct_relevance_criteria: str = ""
+    indirect_relevance_criteria: str = ""
+
+
+@dataclass(frozen=True)
+class DomesticCompanyIdentity:
+    name: str
+    stock_code: str
+    corp_code: str | None = None
+
+
+@dataclass(frozen=True)
+class ThemeEvidence:
+    name: str
+    description: str
+    inclusion_criteria: str
+    exclusion_criteria: str
+    direct_relevance_criteria: str
+    indirect_relevance_criteria: str
+    sources: tuple[SourceRecord, ...]
 
 
 @dataclass(frozen=True)

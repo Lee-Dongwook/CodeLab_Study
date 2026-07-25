@@ -8,3 +8,7 @@ class PublicDataUnavailableError(RuntimeError):
 
 class DartApiError(RuntimeError):
     """OpenDART API 요청 또는 응답 오류."""
+
+
+class ThemeDefinitionUnavailableError(RuntimeError):
+    """공식 근거가 없어 테마 정의를 생성할 수 없을 때 발생하는 오류."""

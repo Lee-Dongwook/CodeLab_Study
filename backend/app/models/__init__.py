@@ -1,5 +1,6 @@
 from .domain import (
     DomesticCandidate,
+    DomesticCompanyIdentity,
     DomesticMetrics,
     NewsDisclosureItem,
     PriceVolumeMetrics,
@@ -8,12 +9,19 @@ from .domain import (
     ResearchRequest,
     SourceRecord,
     ThemeDefinition,
+    ThemeEvidence,
     RiskItem,
 )
-from .errors import DartApiError, InputValidationError, PublicDataUnavailableError
+from .errors import (
+    DartApiError,
+    InputValidationError,
+    PublicDataUnavailableError,
+    ThemeDefinitionUnavailableError,
+)
 
 __all__ = [
     "DomesticCandidate",
+    "DomesticCompanyIdentity",
     "DomesticMetrics",
     "DartApiError",
     "InputValidationError",
@@ -25,5 +33,7 @@ __all__ = [
     "ResearchRequest",
     "SourceRecord",
     "ThemeDefinition",
+    "ThemeDefinitionUnavailableError",
+    "ThemeEvidence",
     "RiskItem",
 ]
