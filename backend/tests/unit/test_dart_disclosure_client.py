@@ -82,6 +82,16 @@ class DartDisclosureClientTests(unittest.TestCase):
         with self.assertRaises(DartApiError):
             client.list_disclosures(DartDisclosureQuery())
 
+    def test_returns_empty_list_when_dart_has_no_matching_disclosures(self) -> None:
+        client = DartDisclosureClient(
+            "test-api-key",
+            opener=lambda *_args, **_kwargs: FakeResponse(
+                {"status": "013", "message": "조회된 데이타가 없습니다."}
+            ),
+        )
+
+        self.assertEqual(client.list_disclosures(DartDisclosureQuery()), ())
+
     def test_rejects_empty_api_key(self) -> None:
         with self.assertRaises(PublicDataUnavailableError):
             DartDisclosureClient(" ")

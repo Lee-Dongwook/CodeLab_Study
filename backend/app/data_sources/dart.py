@@ -52,6 +52,16 @@ class DartDisclosureQuery:
         return params
 
 
+@dataclass(frozen=True)
+class DartCompanyOverview:
+    corp_code: str
+    corp_name: str
+    stock_code: str | None
+    industry_code: str | None
+    homepage_url: str | None
+    ir_url: str | None
+
+
 class DartDisclosureClient:
     """OpenDART 공시 목록 API 어댑터.
 
@@ -86,6 +96,11 @@ class DartDisclosureClient:
         except (OSError, ValueError, UnicodeDecodeError) as error:
             raise DartApiError("OpenDART 공시 목록을 조회하지 못했습니다.") from error
 
+        # OpenDART는 조회 조건에 맞는 공시가 없을 때도 HTTP 200과 상태 코드
+        # 013을 반환한다. 이는 연결 실패가 아니라 정상적인 빈 조회 결과다.
+        if payload.get("status") == "013":
+            return ()
+
         if payload.get("status") != "000":
             message = payload.get("message", "알 수 없는 OpenDART 오류")
             raise DartApiError(f"OpenDART 요청 실패: {message}")
@@ -94,6 +109,27 @@ class DartDisclosureClient:
         if not isinstance(disclosures, list):
             raise DartApiError("OpenDART 응답의 list 형식이 올바르지 않습니다.")
         return disclosures
+
+    def get_company_overview(self, corp_code: str) -> DartCompanyOverview:
+        params = {"crtfc_key": self._api_key, "corp_code": corp_code}
+        request_url = f"https://opendart.fss.or.kr/api/company.json?{urlencode(params)}"
+        try:
+            with self._opener(request_url, timeout=self._timeout_seconds) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (OSError, ValueError, UnicodeDecodeError) as error:
+            raise DartApiError("OpenDART 기업개황을 조회하지 못했습니다.") from error
+
+        if payload.get("status") != "000":
+            message = payload.get("message", "알 수 없는 OpenDART 오류")
+            raise DartApiError(f"OpenDART 요청 실패: {message}")
+        return DartCompanyOverview(
+            corp_code=corp_code,
+            corp_name=str(payload.get("corp_name") or ""),
+            stock_code=_blank_to_none(payload.get("stock_code")),
+            industry_code=_blank_to_none(payload.get("induty_code")),
+            homepage_url=_normalize_url(_blank_to_none(payload.get("hm_url"))),
+            ir_url=_normalize_url(_blank_to_none(payload.get("ir_url"))),
+        )
 
     def get_candidate_disclosures(
         self,
@@ -148,3 +184,14 @@ def _parse_dart_date(value: object) -> date | None:
         return datetime.strptime(value, "%Y%m%d").date()
     except ValueError:
         return None
+
+
+def _blank_to_none(value: object) -> str | None:
+    text = str(value or "").strip()
+    return text or None
+
+
+def _normalize_url(value: str | None) -> str | None:
+    if value is None:
+        return None
+    return value if value.startswith(("http://", "https://")) else f"https://{value}"
