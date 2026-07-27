@@ -1,6 +1,18 @@
 import type { DomesticMetrics, PriceVolumeMetrics } from "../types/research";
 
-const display = (value: number | null) => value ?? "확인 불가";
+const display = (value: number | string | null | undefined) =>
+  value ?? "확인 불가";
+
+const formatMarketCap = (value: number | null) => {
+  if (value == null) return "확인 불가";
+
+  // 원 단위 시가총액을 10억 원 단위로 내림 처리한다.
+  const tenBillionWon = Math.floor(value / 1_000_000_000) * 10;
+  return `${tenBillionWon.toLocaleString("ko-KR")}억원`;
+};
+
+const formatClosePrice = (value: number | null) =>
+  value == null ? "확인 불가" : `${value.toLocaleString("ko-KR")}원`;
 
 export function MetricsTable({
   metrics,
@@ -42,17 +54,21 @@ export function MetricsTable({
             return (
               <tr key={metric.candidate_code}>
                 <td>{metric.candidate_code}</td>
-                <td>{display(metric.close_price)}</td>
-                <td>{display(metric.market_cap)}</td>
-                <td>{display(metric.per)}</td>
-                <td>{display(metric.pbr)}</td>
-                <td>{display(metric.revenue_growth)}</td>
-                <td>{display(metric.operating_margin)}</td>
+                <td>{formatClosePrice(metric.close_price)}</td>
+                <td>{formatMarketCap(metric.market_cap)}</td>
+                <td>{display(metric.per?.toFixed(2))}</td>
+                <td>{display(metric.pbr?.toFixed(2))}</td>
+                <td>{display(metric.revenue_growth?.toFixed(2))}</td>
+                <td>{display(metric.operating_margin?.toFixed(2))}</td>
                 <td>{metric.market_data_as_of ?? "확인 불가"}</td>
                 <td>{metric.financial_period ?? "확인 불가"}</td>
-                <td>{display(priceVolume?.period_return ?? null)}</td>
-                <td>{display(priceVolume?.volatility ?? null)}</td>
-                <td>{display(priceVolume?.volume_change ?? null)}</td>
+                <td>
+                  {display(priceVolume?.period_return?.toFixed(2) ?? null)}
+                </td>
+                <td>{display(priceVolume?.volatility?.toFixed(2) ?? null)}</td>
+                <td>
+                  {display(priceVolume?.volume_change?.toFixed(2) ?? null)}
+                </td>
                 <td>
                   {priceVolume?.volume_surge == null
                     ? "확인 불가"
