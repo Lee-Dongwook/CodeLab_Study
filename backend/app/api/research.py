@@ -8,10 +8,20 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.data_sources import DartCompanyResearchDataSource, DartCorporationRegistry, DartDisclosureClient
-from app.models.errors import DartApiError, InputValidationError, PublicDataUnavailableError, ThemeDefinitionUnavailableError
-from app.services.research_service import ResearchService
+from app.data_sources import (
+    DartCompanyResearchDataSource,
+    DartCorporationRegistry,
+    DartDisclosureClient,
+    KRXListedSecuritiesClient,
+)
+from app.models.errors import (
+    DartApiError,
+    InputValidationError,
+    PublicDataUnavailableError,
+    ThemeDefinitionUnavailableError,
+)
 from app.services.report_service import render_markdown_report
+from app.services.research_service import ResearchService
 
 router = APIRouter(prefix="/research", tags=["research"])
 
@@ -27,6 +37,7 @@ def get_research_service() -> ResearchService:
             DartCompanyResearchDataSource(
                 DartCorporationRegistry.from_environment(),
                 DartDisclosureClient.from_environment(),
+                krx_client=KRXListedSecuritiesClient.from_environment(),
             )
         )
     except PublicDataUnavailableError as error:

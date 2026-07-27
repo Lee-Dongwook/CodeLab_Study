@@ -5,6 +5,7 @@ from typing import Sequence
 
 from app.data_sources.dart import DartCompanyOverview, DartDisclosureClient, DartDisclosureQuery
 from app.data_sources.dart_corporation_registry import DartCorporationRegistry
+from app.data_sources.krx_listed_securities import KRXListedSecuritiesClient
 from app.data_sources.naver_market import NaverMarketDataClient
 from app.data_sources.openai_theme import OpenAIThemeCandidateFinder, ThemeCandidateSuggestion
 from app.data_sources.openai_references import OpenAIReferenceResearcher, ReferenceBundle
@@ -53,11 +54,13 @@ class DartCompanyResearchDataSource:
         dart_client: DartDisclosureClient,
         market_client: NaverMarketDataClient | None = None,
         theme_candidate_finder: OpenAIThemeCandidateFinder | None = None,
+        krx_client: KRXListedSecuritiesClient | None = None,
     ) -> None:
         self._registry = registry
         self._dart_client = dart_client
         self._market_client = market_client or NaverMarketDataClient()
         self._theme_candidate_finder = theme_candidate_finder
+        self._krx_client = krx_client
         self._theme_suggestions: dict[str, tuple[ThemeCandidateSuggestion, ...]] = {}
         self._theme_service = ThemeDefinitionService(
             DartCompanyThemeEvidenceProvider(dart_client), registry
@@ -100,6 +103,8 @@ class DartCompanyResearchDataSource:
                 company = self._registry.resolve(suggestion.company_name)
                 if company is None or company.corp_code is None:
                     continue
+                if not self._is_eligible_common_stock(company.stock_code):
+                    continue
                 overview = self._dart_client.get_company_overview(company.corp_code)
                 candidates.append(
                     DomesticCandidate(
@@ -110,13 +115,15 @@ class DartCompanyResearchDataSource:
                         related_business=suggestion.related_business or f"OpenDART 기업개황 업종코드: {overview.industry_code or '미확인'}",
                         relevance="direct" if suggestion.relevance == "direct" else "indirect",
                         selection_reason=suggestion.selection_reason or "OpenAI 테마 후보 탐색 후 DART 상장 종목으로 확인",
-                        sources=(_overview_source(overview),),
+                        sources=(_krx_source(self._krx_client, company.stock_code), _overview_source(overview)),
                     )
                 )
             return candidates
         company = self._registry.resolve(theme.name)
         if company is None or company.corp_code is None:
             raise ThemeDefinitionUnavailableError("입력한 국내 상장 종목을 확인하지 못했습니다.")
+        if not self._is_eligible_common_stock(company.stock_code):
+            raise ThemeDefinitionUnavailableError("입력한 종목은 KRX 상장 보통주가 아니어서 분석 대상에서 제외됩니다.")
         overview = self._dart_client.get_company_overview(company.corp_code)
         industry = overview.industry_code or "업종코드 미확인"
         return [
@@ -128,7 +135,7 @@ class DartCompanyResearchDataSource:
                 related_business=f"OpenDART 기업개황 업종코드: {industry}",
                 relevance="direct",
                 selection_reason="사용자가 직접 입력한 국내 상장 종목",
-                sources=(_overview_source(overview),),
+                sources=(_krx_source(self._krx_client, company.stock_code), _overview_source(overview)),
             )
         ]
 
@@ -200,6 +207,11 @@ class DartCompanyResearchDataSource:
     def get_references(self, theme: ThemeDefinition, candidates: Sequence[DomesticCandidate]) -> ReferenceBundle:
         return OpenAIReferenceResearcher.from_environment().research(theme.name, candidates)
 
+    def _is_eligible_common_stock(self, stock_code: str) -> bool:
+        if self._krx_client is None:
+            self._krx_client = KRXListedSecuritiesClient.from_environment()
+        return self._krx_client.is_eligible_common_stock(stock_code)
+
 
 def _overview_source(overview: DartCompanyOverview) -> SourceRecord:
     return SourceRecord(
@@ -209,3 +221,9 @@ def _overview_source(overview: DartCompanyOverview) -> SourceRecord:
         url=overview.ir_url or overview.homepage_url or "https://opendart.fss.or.kr/",
         source_type="dart",
     )
+
+
+def _krx_source(client: KRXListedSecuritiesClient | None, stock_code: str) -> SourceRecord:
+    if client is None:
+        raise RuntimeError("KRX 상장 종목 검증 클라이언트가 초기화되지 않았습니다.")
+    return client.source_for(stock_code)

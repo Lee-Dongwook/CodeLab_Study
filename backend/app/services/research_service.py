@@ -90,9 +90,19 @@ class ResearchService:
             for candidate in candidates
             if candidate.exchange == "KRX" and candidate.security_type == "COMMON_STOCK"
         ]
-        direct = [candidate for candidate in eligible if candidate.relevance == "direct"]
-        indirect = [candidate for candidate in eligible if candidate.relevance == "indirect"]
-        return (direct + indirect)[:top_n]
+        unique: dict[str, DomesticCandidate] = {}
+        for candidate in eligible:
+            # 동일 종목이 여러 탐색 경로에서 나와도 하나의 후보로만 남긴다.
+            unique.setdefault(candidate.code, candidate)
+        return sorted(
+            unique.values(),
+            key=lambda candidate: (
+                candidate.relevance != "direct",
+                -len(candidate.sources),
+                not bool(candidate.selection_reason.strip()),
+                not bool(candidate.related_business.strip()),
+            ),
+        )[:top_n]
 
 
 def _deduplicate_sources(sources: list[SourceRecord]) -> list[SourceRecord]:

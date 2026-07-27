@@ -21,9 +21,11 @@ export interface DomesticCandidate {
   name: string;
   code: string;
   exchange: string;
+  security_type: string;
   related_business: string;
   relevance: Relevance;
   selection_reason: string;
+  sources: SourceRecord[];
 }
 
 export interface DomesticMetrics {
@@ -90,6 +92,7 @@ export interface AssetManagerReference {
 }
 
 export interface ResearchReport {
+  request: { theme: string; top_n: number };
   generated_at: string;
   theme_definition: ThemeDefinition;
   candidates: DomesticCandidate[];

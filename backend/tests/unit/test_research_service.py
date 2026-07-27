@@ -86,6 +86,15 @@ class ResearchServiceTests(unittest.TestCase):
 
         self.assertEqual(len(report.candidates), 2)
 
+    def test_deduplicates_candidates_before_applying_top_n(self) -> None:
+        duplicate = DomesticCandidate("직접사", "100001", "KRX", "COMMON_STOCK", "중복", "direct", "중복 근거", (source("duplicate"),))
+        selected = self.service._select_candidates(
+            [duplicate, *FakePublicDataSource().find_domestic_candidates(ThemeDefinition("테마", "설명", "포함", "제외", (source("theme"),)))],
+            3,
+        )
+
+        self.assertEqual([candidate.code for candidate in selected], ["100001", "200002"])
+
     def test_renders_required_phase_one_sections(self) -> None:
         markdown = render_markdown_report(self.service.create_report("로봇", 3))
 

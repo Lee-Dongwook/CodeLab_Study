@@ -53,6 +53,12 @@ export function ResearchPage() {
               {report.theme_definition.name} 테마에서 확인된 국내 후보는{" "}
               {report.candidates.length}개입니다.
             </p>
+            <p className="caption">
+              KRX 상장 보통주만 대상으로 하며 ETF·ETN·우선주·SPAC는 제외합니다.
+              {report.candidates.length < report.request.top_n
+                ? ` 적격 후보가 ${report.request.top_n}개보다 적어 확인된 ${report.candidates.length}개만 표시합니다.`
+                : ""}
+            </p>
           </section>
           <section>
             <h2>2. 국내 테마 정의</h2>
