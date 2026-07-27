@@ -101,12 +101,58 @@ export function ResearchPage() {
                 <p><strong>대표 종목:</strong> {report.us_market_reference.representative_companies.join(", ") || "확인 가능한 자료 없음"}</p>
                 <p><strong>대표 ETF:</strong> {report.us_market_reference.representative_etfs.join(", ") || "확인 가능한 자료 없음"}</p>
                 <p><strong>뉴스 요약:</strong> {report.us_market_reference.news_summary}</p>
+                {report.us_market_reference.market_snapshots.length > 0 && (
+                  <div className="table-scroll">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Yahoo Finance 참고 지표</th><th>최근 종가</th><th>일간 등락률</th><th>거래량</th><th>기준일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {report.us_market_reference.market_snapshots.map((snapshot) => (
+                          <tr key={snapshot.ticker}>
+                            <td>{snapshot.name} ({snapshot.ticker})</td>
+                            <td>{snapshot.close_price?.toLocaleString("en-US") ?? "확인 불가"}</td>
+                            <td>{snapshot.daily_change_percent == null ? "확인 불가" : `${snapshot.daily_change_percent.toFixed(2)}%`}</td>
+                            <td>{snapshot.volume?.toLocaleString("en-US") ?? "확인 불가"}</td>
+                            <td>{snapshot.as_of ?? "확인 불가"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             ) : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
           </section>
           <section>
             <h2>8. 관련 미국 Peer Company (참고)</h2>
-            {report.us_peer_companies.length ? <ul>{report.us_peer_companies.map((peer) => <li key={peer.ticker}><strong>{peer.name} ({peer.ticker})</strong>: {peer.related_business} — {peer.connection} ({peer.relevance === "direct" ? "직접 관련" : "간접 관련"})</li>)}</ul> : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
+            {report.us_peer_companies.length ? (
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr><th>Peer Company</th><th>관련 사업·연결 근거</th><th>관련 여부</th><th>최근 종가</th><th>일간 등락률</th><th>거래량 변화</th><th>종가 영향 뉴스</th></tr>
+                  </thead>
+                  <tbody>
+                    {report.us_peer_companies.map((peer) => {
+                      const snapshot = peer.market_snapshot;
+                      return (
+                        <tr key={peer.ticker}>
+                          <td>{peer.name} ({peer.ticker})</td>
+                          <td>{peer.related_business} — {peer.connection}</td>
+                          <td>{peer.relevance === "direct" ? "직접 관련" : "간접 관련"}</td>
+                          <td>{snapshot?.close_price?.toLocaleString("en-US") ?? "확인 불가"}</td>
+                          <td>{snapshot?.daily_change_percent == null ? "확인 불가" : `${snapshot.daily_change_percent.toFixed(2)}%`}</td>
+                          <td>{snapshot?.volume_change_percent == null ? "확인 불가" : `${snapshot.volume_change_percent.toFixed(2)}%`}</td>
+                          <td>{peer.closing_news_summary}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
           </section>
           <section>
             <h2>9. 글로벌 운용사 동향 (참고)</h2>

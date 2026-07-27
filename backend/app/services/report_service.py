@@ -68,7 +68,12 @@ def render_markdown_report(report: ResearchReport) -> str:
     lines.extend(["", "## 8. 관련 미국 Peer Company (참고)"])
     if report.us_peer_companies:
         for peer in report.us_peer_companies:
-            lines.append(f"- {peer.name} ({peer.ticker}) | {peer.related_business} | {peer.connection} | {peer.relevance}")
+            snapshot = peer.market_snapshot
+            price = _display(snapshot.close_price) if snapshot else "확인 불가"
+            change = _display(snapshot.daily_change_percent) if snapshot else "확인 불가"
+            volume_change = _display(snapshot.volume_change_percent) if snapshot else "확인 불가"
+            lines.append(f"- {peer.name} ({peer.ticker}) | {peer.related_business} | {peer.connection} | {peer.relevance} | 종가: {price} | 등락률: {change}% | 거래량 변화: {volume_change}%")
+            lines.append(f"  - 종가 영향 뉴스: {peer.closing_news_summary}")
     else:
         lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
 

@@ -73,6 +73,18 @@ export interface USMarketReference {
   representative_etfs: string[];
   news_summary: string;
   as_of: string | null;
+  market_snapshots: USMarketSnapshot[];
+}
+
+export interface USMarketSnapshot {
+  ticker: string;
+  name: string;
+  instrument_type: string;
+  close_price: number | null;
+  daily_change_percent: number | null;
+  volume: number | null;
+  volume_change_percent: number | null;
+  as_of: string | null;
 }
 
 export interface USPeerCompany {
@@ -81,6 +93,8 @@ export interface USPeerCompany {
   related_business: string;
   connection: string;
   relevance: Relevance;
+  market_snapshot: USMarketSnapshot | null;
+  closing_news_summary: string;
 }
 
 export interface AssetManagerReference {

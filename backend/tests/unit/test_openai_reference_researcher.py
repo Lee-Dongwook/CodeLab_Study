@@ -2,7 +2,7 @@ import json
 import unittest
 
 from app.data_sources.openai_references import OpenAIReferenceResearcher
-from app.models.domain import DomesticCandidate, SourceRecord
+from app.models.domain import DomesticCandidate, SourceRecord, USMarketSnapshot
 
 
 class FakeResponse:
@@ -24,6 +24,12 @@ class FakeUSMarketValidator:
         return ticker == "ABC"
 
 
+class FakeUSMarketClient:
+    def get_recent_snapshot(self, ticker: str) -> USMarketSnapshot:
+        source = _source()
+        return USMarketSnapshot(ticker, "Company", "EQUITY", 100.0, 1.0, 1000, 10.0, None, source)
+
+
 class OpenAIReferenceResearcherTests(unittest.TestCase):
     def test_parses_web_search_references(self) -> None:
         output = {
@@ -36,6 +42,7 @@ class OpenAIReferenceResearcherTests(unittest.TestCase):
             "test-key",
             opener=lambda *_args, **_kwargs: FakeResponse({"output": [{"type": "web_search_call", "action": {"sources": [{"url": "https://example.test/source"}]}}, {"content": [{"type": "output_text", "text": json.dumps(output)}]}]}),
             us_market_validator=FakeUSMarketValidator(),
+            us_market_client=FakeUSMarketClient(),
         )
         candidate = DomesticCandidate("테스트", "000001", "KRX", "COMMON_STOCK", "사업", "direct", "근거", (_source(),))
 
@@ -45,6 +52,7 @@ class OpenAIReferenceResearcherTests(unittest.TestCase):
         self.assertEqual(bundle.peers[0].ticker, "ABC")
         self.assertEqual(bundle.asset_managers[0].manager, "Example Asset")
         self.assertEqual(bundle.us_market.sources[0].url, "https://example.test/source")
+        self.assertEqual(bundle.us_market.market_snapshots[0].ticker, "ABC")
 
 
 def _source() -> SourceRecord:

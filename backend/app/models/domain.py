@@ -121,6 +121,28 @@ class NewsDisclosureItem:
 
 
 @dataclass(frozen=True)
+class USMarketSnapshot:
+    ticker: str
+    name: str
+    instrument_type: str
+    close_price: float | None
+    daily_change_percent: float | None
+    volume: int | None
+    volume_change_percent: float | None
+    as_of: date | None
+    source: SourceRecord
+
+
+@dataclass(frozen=True)
+class USMacroIndicator:
+    label: str
+    ticker: str
+    snapshot: USMarketSnapshot
+    interpretation: str
+    domestic_check_point: str
+
+
+@dataclass(frozen=True)
 class USMarketReference:
     theme: str
     trend: str
@@ -130,6 +152,8 @@ class USMarketReference:
     news_summary: str
     as_of: date | None
     sources: tuple[SourceRecord, ...]
+    market_snapshots: tuple[USMarketSnapshot, ...] = ()
+    macro_indicators: tuple[USMacroIndicator, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -140,6 +164,8 @@ class USPeerCompany:
     connection: str
     relevance: Relevance
     sources: tuple[SourceRecord, ...]
+    market_snapshot: USMarketSnapshot | None = None
+    closing_news_summary: str = "확인 가능한 공개자료 없음"
 
 
 @dataclass(frozen=True)

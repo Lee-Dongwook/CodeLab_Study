@@ -50,7 +50,7 @@ theme-stock-research/
 
 - **Backend** — Python, FastAPI, Uvicorn
 - **Frontend** — React, Vite, TypeScript
-- **외부 데이터** — OpenDART(공시), OpenAI(테마 후보·참고 정보 탐색)
+- **외부 데이터** — OpenDART(공시), OpenAI(테마 후보·참고 정보 탐색), yfinance(미국 시장 참고 시세·거래량)
 
 ## 시작하기
 
@@ -73,6 +73,7 @@ cp .env.example .env
 
 > 실제 API 키·토큰·계정 정보는 `.env`에만 작성하고 저장소에 커밋하지 않습니다.
 > `OPENAI_THEME_MODEL`, `OPENAI_REFERENCE_MODEL`이 설정되면 각각 `OPENAI_MODEL`보다 우선합니다.
+> Yahoo Finance 데이터는 `yfinance`를 통한 비공식 참고 데이터이며, 제공 형식·접근 가능 여부는 보장되지 않습니다.
 
 ### 백엔드 실행
 

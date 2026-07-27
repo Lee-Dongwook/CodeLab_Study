@@ -6,7 +6,7 @@ from .krx_listed_securities import KRXListedSecuritiesClient
 from .naver_market import NaverMarketDataClient
 from .openai_theme import OpenAIThemeCandidateFinder
 from .openai_references import OpenAIReferenceResearcher
-from .us_market import YahooUSMarketValidator
+from .us_market import YahooUSMarketClient, YahooUSMarketValidator
 
 __all__ = [
     "DartCorporationRegistry",
@@ -18,6 +18,7 @@ __all__ = [
     "NaverMarketDataClient",
     "OpenAIThemeCandidateFinder",
     "OpenAIReferenceResearcher",
+    "YahooUSMarketClient",
     "YahooUSMarketValidator",
     "PublicResearchDataSource",
 ]
