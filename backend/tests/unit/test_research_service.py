@@ -95,6 +95,25 @@ class ResearchServiceTests(unittest.TestCase):
 
         self.assertEqual([candidate.code for candidate in selected], ["100001", "200002"])
 
+    def test_selects_up_to_ten_eligible_candidates(self) -> None:
+        candidates = [
+            DomesticCandidate(
+                f"후보 {index}",
+                f"{index:06d}",
+                "KRX",
+                "COMMON_STOCK",
+                "관련 사업",
+                "direct",
+                "공식 근거",
+                (source(f"candidate-{index}"),),
+            )
+            for index in range(11)
+        ]
+
+        selected = self.service._select_candidates(candidates, 10)
+
+        self.assertEqual(len(selected), 10)
+
     def test_renders_required_phase_one_sections(self) -> None:
         markdown = render_markdown_report(self.service.create_report("로봇", 3))
 

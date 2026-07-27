@@ -66,11 +66,13 @@ cp .env.example .env
 | ------------------------ | -------------------------------------------------------------- |
 | `DART_API_KEY`           | OpenDART API 키                                                |
 | `OPENAI_API_KEY`         | OpenAI API 키                                                  |
+| `OPENAI_MODEL`           | 공통 기본 모델 (전용 모델 미설정 시 사용)                     |
 | `OPENAI_THEME_MODEL`     | 테마 후보 탐색 모델 (기본 `gpt-4o-mini`)                       |
 | `OPENAI_REFERENCE_MODEL` | 미국 참고 정보 탐색 모델 (기본 `gpt-4o-mini`)                  |
 | `VITE_API_BASE_URL`      | 프론트엔드가 사용할 백엔드 주소 (기본 `http://localhost:8000`) |
 
 > 실제 API 키·토큰·계정 정보는 `.env`에만 작성하고 저장소에 커밋하지 않습니다.
+> `OPENAI_THEME_MODEL`, `OPENAI_REFERENCE_MODEL`이 설정되면 각각 `OPENAI_MODEL`보다 우선합니다.
 
 ### 백엔드 실행
 

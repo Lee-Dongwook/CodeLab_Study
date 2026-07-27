@@ -45,9 +45,17 @@ class OpenAIThemeCandidateFinder:
     @classmethod
     def from_environment(cls) -> "OpenAIThemeCandidateFinder":
         load_project_env()
-        return cls(os.getenv("OPENAI_API_KEY", ""), model=os.getenv("OPENAI_THEME_MODEL", "gpt-4o-mini"))
+        return cls(
+            os.getenv("OPENAI_API_KEY", ""),
+            model=os.getenv(
+                "OPENAI_THEME_MODEL",
+                os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+            ),
+        )
 
-    def find_candidates(self, theme: str, *, limit: int = 5) -> Sequence[ThemeCandidateSuggestion]:
+    def find_candidates(self, theme: str, *, limit: int = 10) -> Sequence[ThemeCandidateSuggestion]:
+        if not 1 <= limit <= 10:
+            raise ValueError("후보 탐색 제한은 1~10 사이여야 합니다.")
         schema = {
             "type": "object",
             "additionalProperties": False,
@@ -76,7 +84,7 @@ class OpenAIThemeCandidateFinder:
             "input": [
                 {
                     "role": "system",
-                    "content": [{"type": "input_text", "text": "한국 KRX 상장 보통주 테마 리서치 후보 탐색기다. 투자 추천이나 순위를 만들지 말고, 입력 테마와 사업 연관성이 높은 국내 상장 기업명만 최대 10개 제안하라. ETF, ETN, 우선주, SPAC, 비상장사는 제외한다. 적격 후보가 부족하면 확보한 후보만 반환한다. 모든 설명은 짧고 사실 중심으로 작성한다."}],
+                    "content": [{"type": "input_text", "text": f"한국 KRX 상장 보통주 테마 리서치 후보 탐색기다. 투자 추천이나 순위를 만들지 말고, 입력 테마와 사업 연관성이 높은 국내 상장 기업명은 가능한 한 {limit}개를 모두 제안하라. 3개에서 임의로 멈추지 말고, 직접 관련 기업을 먼저 제시한 뒤 간접 관련 기업까지 넓혀라. ETF, ETN, 우선주, SPAC, 비상장사는 제외한다. 공개 근거로 확인되는 적격 후보가 {limit}개보다 부족할 때만 확보한 후보만 반환한다. 모든 설명은 짧고 사실 중심으로 작성한다."}],
                 },
                 {"role": "user", "content": [{"type": "input_text", "text": f"테마: {theme}"}]},
             ],

@@ -34,7 +34,13 @@ class OpenAIReferenceResearcher:
     @classmethod
     def from_environment(cls) -> "OpenAIReferenceResearcher":
         load_project_env()
-        return cls(os.getenv("OPENAI_API_KEY", ""), model=os.getenv("OPENAI_REFERENCE_MODEL", "gpt-4o-mini"))
+        return cls(
+            os.getenv("OPENAI_API_KEY", ""),
+            model=os.getenv(
+                "OPENAI_REFERENCE_MODEL",
+                os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+            ),
+        )
 
     def research(self, theme: str, candidates: Sequence[DomesticCandidate]) -> ReferenceBundle:
         schema = _schema()
