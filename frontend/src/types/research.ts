@@ -74,6 +74,7 @@ export interface USMarketReference {
   news_summary: string;
   as_of: string | null;
   market_snapshots: USMarketSnapshot[];
+  macro_indicators: USMacroIndicator[];
 }
 
 export interface USMarketSnapshot {
@@ -85,6 +86,14 @@ export interface USMarketSnapshot {
   volume: number | null;
   volume_change_percent: number | null;
   as_of: string | null;
+}
+
+export interface USMacroIndicator {
+  label: string;
+  ticker: string;
+  snapshot: USMarketSnapshot;
+  interpretation: string;
+  domestic_check_point: string;
 }
 
 export interface USPeerCompany {

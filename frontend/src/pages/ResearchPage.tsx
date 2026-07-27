@@ -101,6 +101,32 @@ export function ResearchPage() {
                 <p><strong>대표 종목:</strong> {report.us_market_reference.representative_companies.join(", ") || "확인 가능한 자료 없음"}</p>
                 <p><strong>대표 ETF:</strong> {report.us_market_reference.representative_etfs.join(", ") || "확인 가능한 자료 없음"}</p>
                 <p><strong>뉴스 요약:</strong> {report.us_market_reference.news_summary}</p>
+                {report.us_market_reference.macro_indicators.length > 0 && (
+                  <>
+                    <h3>미국 대표 지표: 수치·의미·국내 확인 항목</h3>
+                    <p className="caption">아래 항목은 매수·매도 지시가 아닌, 국내 장중 함께 확인할 공개 수치와 점검 항목입니다.</p>
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr><th>지표</th><th>수치 기반 사실</th><th>의미 해석</th><th>국내 장중 확인 항목</th></tr>
+                        </thead>
+                        <tbody>
+                          {report.us_market_reference.macro_indicators.map((indicator) => {
+                            const snapshot = indicator.snapshot;
+                            return (
+                              <tr key={indicator.ticker}>
+                                <td>{indicator.label} ({indicator.ticker})</td>
+                                <td>최근 값 {snapshot.close_price?.toLocaleString("en-US") ?? "확인 불가"}<br />일간 등락률 {snapshot.daily_change_percent == null ? "확인 불가" : `${snapshot.daily_change_percent.toFixed(2)}%`}<br />거래량 변화 {snapshot.volume_change_percent == null ? "확인 불가" : `${snapshot.volume_change_percent.toFixed(2)}%`}</td>
+                                <td>{indicator.interpretation}</td>
+                                <td>{indicator.domestic_check_point}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
                 {report.us_market_reference.market_snapshots.length > 0 && (
                   <div className="table-scroll">
                     <table>

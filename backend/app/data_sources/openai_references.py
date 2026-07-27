@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 from app.config import load_project_env
 from app.models.domain import AssetManagerReference, DomesticCandidate, SourceRecord, USMarketReference, USPeerCompany
 from app.models.errors import PublicDataUnavailableError
-from app.data_sources.us_market import YahooUSMarketClient, YahooUSMarketValidator
+from app.data_sources.us_market import YahooUSMarketClient, YahooUSMarketValidator, get_us_macro_indicators
 
 _RESPONSES_URL = "https://api.openai.com/v1/responses"
 
@@ -86,10 +86,18 @@ def _to_bundle(theme: str, value: dict[str, Any], sources: tuple[SourceRecord, .
                 snapshots.append(market_client.get_recent_snapshot(ticker))
             except PublicDataUnavailableError:
                 continue
+        macro_indicators = get_us_macro_indicators(market_client)
         combined_sources = tuple(
-            {source.source_id: source for source in (*sources, *(snapshot.source for snapshot in snapshots))}.values()
+            {
+                source.source_id: source
+                for source in (
+                    *sources,
+                    *(snapshot.source for snapshot in snapshots),
+                    *(indicator.snapshot.source for indicator in macro_indicators),
+                )
+            }.values()
         )
-        us_market = USMarketReference(theme, str(market["trend"]), str(market.get("background", "")), tuple(market.get("representative_companies", [])), tuple(market.get("representative_etfs", [])), str(market.get("news_summary", "")), _parse_date(market.get("as_of")), combined_sources, tuple(snapshots))
+        us_market = USMarketReference(theme, str(market["trend"]), str(market.get("background", "")), tuple(market.get("representative_companies", [])), tuple(market.get("representative_etfs", [])), str(market.get("news_summary", "")), _parse_date(market.get("as_of")), combined_sources, tuple(snapshots), macro_indicators)
     peers = []
     for item in value.get("peers", []):
         if not item.get("name") or not item.get("ticker") or not validator.is_listed_equity(str(item["ticker"])):

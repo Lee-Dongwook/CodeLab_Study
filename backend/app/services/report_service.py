@@ -62,6 +62,13 @@ def render_markdown_report(report: ResearchReport) -> str:
     if report.us_market_reference:
         reference = report.us_market_reference
         lines.extend([f"- 기준일: {_display(reference.as_of)}", f"- 동향: {reference.trend}", f"- 배경: {reference.background}", f"- 대표 종목: {', '.join(reference.representative_companies) or '확인 가능한 자료 없음'}", f"- 대표 ETF: {', '.join(reference.representative_etfs) or '확인 가능한 자료 없음'}", f"- 뉴스 요약: {reference.news_summary}"])
+        if reference.macro_indicators:
+            lines.append("- 미국 대표 지표 (수치 기반 사실 / 의미 해석 / 국내 장중 확인 항목)")
+            for indicator in reference.macro_indicators:
+                snapshot = indicator.snapshot
+                lines.append(f"  - {indicator.label} ({indicator.ticker}): 최근 값 {_display(snapshot.close_price)}, 일간 등락률 {_display(snapshot.daily_change_percent)}%, 거래량 변화 {_display(snapshot.volume_change_percent)}%")
+                lines.append(f"    - 의미 해석: {indicator.interpretation}")
+                lines.append(f"    - 국내 확인 항목: {indicator.domestic_check_point}")
     else:
         lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
 
