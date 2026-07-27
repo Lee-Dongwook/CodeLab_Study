@@ -70,7 +70,7 @@ class DartCompanyResearchDataSource:
         if self._registry.resolve(theme_or_company) is not None:
             return self._theme_service.define(theme_or_company)
         finder = self._theme_candidate_finder or OpenAIThemeCandidateFinder.from_environment()
-        suggestions = finder.find_candidates(theme_or_company, limit=5)
+        suggestions = finder.find_candidates(theme_or_company, limit=10)
         resolved = [
             suggestion
             for suggestion in suggestions

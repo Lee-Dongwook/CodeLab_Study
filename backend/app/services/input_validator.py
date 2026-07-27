@@ -4,8 +4,8 @@ from app.models.domain import ResearchRequest
 from app.models.errors import InputValidationError
 
 _AMBIGUOUS_TERMS = {"주식", "테마", "산업", "기업", "시장"}
-_MIN_TOP_N = 3
-_MAX_TOP_N = 5
+_MIN_TOP_N = 1
+_MAX_TOP_N = 10
 
 
 def validate_request(theme: object, top_n: object) -> ResearchRequest:
@@ -22,8 +22,8 @@ def validate_request(theme: object, top_n: object) -> ResearchRequest:
         raise InputValidationError("theme이 모호합니다. 더 구체적인 테마명 또는 국내 종목명을 입력해 주세요.")
 
     if isinstance(top_n, bool) or not isinstance(top_n, int):
-        raise InputValidationError("top_n은 3~5 사이의 정수여야 합니다.")
+        raise InputValidationError("top_n은 1~10 사이의 정수여야 합니다.")
     if not _MIN_TOP_N <= top_n <= _MAX_TOP_N:
-        raise InputValidationError("top_n은 3~5 사이에서 선택해 주세요.")
+        raise InputValidationError("top_n은 1~10 사이에서 선택해 주세요.")
 
     return ResearchRequest(theme=normalized_theme, top_n=top_n)

@@ -12,6 +12,7 @@ input, button { border-radius: 8px; border: 1px solid #d6dbea; padding: 10px 12p
 button { align-self: end; border: 0; background: #2449bf; color: #fff; font-weight: 700; cursor: pointer; }
 button:disabled { background: #8794bd; cursor: wait; }
 .error { margin-top: 16px; padding: 12px; color: #9b2020; background: #fff0f0; border-radius: 8px; }
+.input-error { color: #9b2020; font-weight: 500; }
 .dart-panel { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-top: 24px; padding: 20px; background: #eef3ff; border-radius: 12px; }
 .dart-panel h2 { margin-bottom: 6px; }
 .dart-panel p { margin: 0; }

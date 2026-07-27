@@ -6,24 +6,24 @@ const display = (value: number | string | null | undefined) =>
 const formatMarketCap = (value: number | null) => {
   if (value == null) return "확인 불가";
 
-  // 원 단위 시가총액을 10억 원 단위로 내림 처리한다.
-  const tenBillionWon = Math.floor(value / 1_000_000_000) * 10;
-  return `${tenBillionWon.toLocaleString("ko-KR")}억원`;
+  // 원 단위 시가총액을 십억 원 단위로 내림 처리한다.
+  const billionWon = Math.floor(value / 1_000_000_000);
+  return `${billionWon.toLocaleString("ko-KR")}십억원`;
 };
 
 const formatClosePrice = (value: number | null) =>
   value == null ? "확인 불가" : `${value.toLocaleString("ko-KR")}원`;
 
-export function MetricsTable({
-  metrics,
-  priceVolumeMetrics,
-}: {
+interface IMetricsTable {
   metrics: DomesticMetrics[];
   priceVolumeMetrics: PriceVolumeMetrics[];
-}) {
+}
+
+export function MetricsTable({ metrics, priceVolumeMetrics }: IMetricsTable) {
   const priceVolumeByCode = new Map(
     priceVolumeMetrics.map((metric) => [metric.candidate_code, metric]),
   );
+
   if (!metrics.length) return <p>확인 가능한 기본 정량 데이터가 없습니다.</p>;
 
   return (

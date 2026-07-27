@@ -54,7 +54,7 @@ class OpenAIThemeCandidateFinder:
             "properties": {
                 "candidates": {
                     "type": "array",
-                    "minItems": 3,
+                    "minItems": 1,
                     "maxItems": limit,
                     "items": {
                         "type": "object",
@@ -76,7 +76,7 @@ class OpenAIThemeCandidateFinder:
             "input": [
                 {
                     "role": "system",
-                    "content": [{"type": "input_text", "text": "한국 KRX 상장 보통주 테마 리서치 후보 탐색기다. 투자 추천이나 순위를 만들지 말고, 입력 테마와 사업 연관성이 높은 국내 상장 기업명만 3~5개 제안하라. ETF, ETN, 우선주, SPAC, 비상장사는 제외한다. 모든 설명은 짧고 사실 중심으로 작성한다."}],
+                    "content": [{"type": "input_text", "text": "한국 KRX 상장 보통주 테마 리서치 후보 탐색기다. 투자 추천이나 순위를 만들지 말고, 입력 테마와 사업 연관성이 높은 국내 상장 기업명만 최대 10개 제안하라. ETF, ETN, 우선주, SPAC, 비상장사는 제외한다. 적격 후보가 부족하면 확보한 후보만 반환한다. 모든 설명은 짧고 사실 중심으로 작성한다."}],
                 },
                 {"role": "user", "content": [{"type": "input_text", "text": f"테마: {theme}"}]},
             ],

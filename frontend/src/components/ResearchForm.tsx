@@ -7,11 +7,18 @@ interface ResearchFormProps {
 
 export function ResearchForm({ disabled, onSubmit }: ResearchFormProps) {
   const [theme, setTheme] = useState("");
-  const [topN, setTopN] = useState(3);
+  const [topN, setTopN] = useState("3");
+  const [topNError, setTopNError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(theme, topN);
+    const parsedTopN = Number(topN);
+    if (!Number.isInteger(parsedTopN) || parsedTopN < 1 || parsedTopN > 10) {
+      setTopNError("비교 종목 수는 1~10 사이의 정수여야 합니다.");
+      return;
+    }
+    setTopNError(null);
+    onSubmit(theme, parsedTopN);
   }
 
   return (
@@ -26,15 +33,26 @@ export function ResearchForm({ disabled, onSubmit }: ResearchFormProps) {
         />
       </label>
       <label>
-        비교 종목 수 (3~5개)
+        비교 종목 수 (1~10개)
         <input
           type="number"
-          min="3"
-          max="5"
+          min="1"
+          max="10"
+          step="1"
           value={topN}
-          onChange={(event) => setTopN(Number(event.target.value))}
-          required
+          onChange={(event) => {
+            const value = event.target.value;
+            // 앞자리 0·소수·범위 밖 값은 반영하지 않는다.
+            if (/^(?:[1-9]|10)?$/.test(value)) {
+              setTopN(value);
+              setTopNError(null);
+            }
+          }}
+          aria-label="비교 종목 수"
+          aria-invalid={Boolean(topNError)}
+          aria-describedby={topNError ? "top-n-error" : undefined}
         />
+        {topNError && <small id="top-n-error" className="input-error">{topNError}</small>}
       </label>
       <button type="submit" disabled={disabled}>
         {disabled ? "분석 중..." : "국내 테마 분석"}

@@ -11,6 +11,16 @@ class ValidateRequestTests(unittest.TestCase):
         self.assertEqual(request.theme, "AI 반도체")
         self.assertEqual(request.top_n, 3)
 
+    def test_accepts_maximum_top_n(self) -> None:
+        request = validate_request("AI 반도체", 10)
+
+        self.assertEqual(request.top_n, 10)
+
+    def test_accepts_minimum_top_n(self) -> None:
+        request = validate_request("AI 반도체", 1)
+
+        self.assertEqual(request.top_n, 1)
+
     def test_accepts_domestic_company_name(self) -> None:
         request = validate_request("두산로보틱스", 3)
 
@@ -25,7 +35,7 @@ class ValidateRequestTests(unittest.TestCase):
             validate_request("454910", 3)
 
     def test_rejects_invalid_top_n(self) -> None:
-        for value in (0, 1, 2, 6, "3", True):
+        for value in (0, 11, "3", True):
             with self.subTest(value=value):
                 with self.assertRaises(InputValidationError):
                     validate_request("로봇", value)
