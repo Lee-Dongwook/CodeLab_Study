@@ -5,7 +5,8 @@ try:
 except ModuleNotFoundError:
     pd = None
 
-from app.data_sources.us_market import YahooUSMarketClient
+from app.data_sources.us_market import YahooUSMarketClient, get_us_macro_indicators
+from app.models.domain import SourceRecord, USMarketSnapshot
 
 
 class FakeTicker:
@@ -33,3 +34,16 @@ class YahooUSMarketClientTests(unittest.TestCase):
         self.assertEqual(snapshot.volume, 2500)
         self.assertAlmostEqual(snapshot.volume_change_percent, 150.0)
         self.assertEqual(snapshot.as_of.isoformat(), "2026-07-24")
+
+    def test_builds_five_macro_indicators(self) -> None:
+        class FakeMarketClient:
+            def get_recent_snapshot(self, ticker: str) -> USMarketSnapshot:
+                return USMarketSnapshot(
+                    ticker, ticker, "INDEX", 100.0, 1.0, 1000, 5.0, None,
+                    SourceRecord(f"test:{ticker}", ticker, "테스트", "https://example.test", "market_data"),
+                )
+
+        indicators = get_us_macro_indicators(FakeMarketClient())
+
+        self.assertEqual([indicator.ticker for indicator in indicators], ["^GSPC", "^SOX", "HG=F", "GC=F", "^TNX"])
+        self.assertIn("상승", indicators[0].interpretation)
