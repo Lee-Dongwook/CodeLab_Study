@@ -1,0 +1,15 @@
+file '01-start.png'
+duration 4
+file '02-input.png'
+duration 4
+file '03-loading.png'
+duration 4
+file '04-summary-candidates.png'
+duration 5
+file '05-metrics.png'
+duration 5
+file '06-news.png'
+duration 5
+file '07-reference.png'
+duration 5
+file '07-reference.png'
