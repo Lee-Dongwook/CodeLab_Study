@@ -31,6 +31,10 @@ export interface DomesticCandidate {
 export interface DomesticMetrics {
   candidate_code: string;
   close_price: number | null;
+  previous_day_price_change_percent: number | null;
+  current_day_price_change_percent: number | null;
+  weekly_price_change_percent: number | null;
+  monthly_price_change_percent: number | null;
   market_cap: number | null;
   per: number | null;
   pbr: number | null;
@@ -38,6 +42,7 @@ export interface DomesticMetrics {
   operating_margin: number | null;
   market_data_as_of: string | null;
   financial_period: string | null;
+  sources: SourceRecord[];
 }
 
 export interface PriceVolumeMetrics {
@@ -63,6 +68,7 @@ export interface NewsDisclosureItem {
   summary: string;
   url: string;
   published_at: string | null;
+  source: SourceRecord;
 }
 
 export interface USMarketReference {
@@ -104,14 +110,17 @@ export interface USPeerCompany {
   relevance: Relevance;
   market_snapshot: USMarketSnapshot | null;
   closing_news_summary: string;
+  closing_news_url: string;
 }
 
 export interface AssetManagerReference {
   manager: string;
+  market: "KR" | "GLOBAL";
   etf_or_holding: string;
   public_view: string;
   recent_activity: string;
   as_of: string | null;
+  source_url: string;
 }
 
 export interface ResearchReport {

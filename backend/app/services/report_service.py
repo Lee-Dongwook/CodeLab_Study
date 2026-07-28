@@ -80,14 +80,17 @@ def render_markdown_report(report: ResearchReport) -> str:
             change = _display(snapshot.daily_change_percent) if snapshot else "확인 불가"
             volume_change = _display(snapshot.volume_change_percent) if snapshot else "확인 불가"
             lines.append(f"- {peer.name} ({peer.ticker}) | {peer.related_business} | {peer.connection} | {peer.relevance} | 종가: {price} | 등락률: {change}% | 거래량 변화: {volume_change}%")
-            lines.append(f"  - 종가 영향 뉴스: {peer.closing_news_summary}")
+            lines.append(f"  - 종가 마감 영향 공시·뉴스: {peer.closing_news_summary}")
+            if peer.closing_news_url:
+                lines.append(f"    - {peer.closing_news_url}")
     else:
         lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
 
     lines.extend(["", "## 9. 글로벌 운용사 동향 (참고)"])
     if report.asset_manager_references:
         for manager in report.asset_manager_references:
-            lines.append(f"- {manager.manager} | {manager.etf_or_holding} | {manager.public_view} | {manager.recent_activity} | {_display(manager.as_of)}")
+            market_label = "대한민국 운용사 ETF" if manager.market == "KR" else "글로벌 운용사"
+            lines.append(f"- [{market_label}] {manager.manager} | {manager.etf_or_holding} | {manager.public_view} | {manager.recent_activity} | {_display(manager.as_of)} | {manager.source_url or '출처 URL 미확인'}")
     else:
         lines.append("- 확인 가능한 공개 참고자료가 없습니다.")
 
@@ -101,17 +104,21 @@ def render_markdown_report(report: ResearchReport) -> str:
 
 
 def _metrics_table(metrics: tuple[DomesticMetrics, ...]) -> str:
-    header = "| 종목코드 | 최근 종가 | 시가총액 | PER | PBR | 매출 성장률 | 영업이익률 | 시장 기준일 | 재무 기준 기간 |"
-    divider = "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |"
+    header = "| 종목코드 | 최근 종가 | 전일 주가 등락률 | 당일 주가 등락률 | 주간 등락률(5거래일) | 월간 등락률(20거래일) | 시가총액 | PER | PBR | 매출 성장률 | 영업이익률 | 시장 기준일 | 재무 기준 기간 |"
+    divider = "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |"
     if not metrics:
-        return "\n".join([header, divider, "| 확인 가능한 지표 없음 | - | - | - | - | - | - | - | - |"])
+        return "\n".join([header, divider, "| 확인 가능한 지표 없음 | - | - | - | - | - | - | - | - | - | - | - | - |"])
 
     rows = [header, divider]
     for metric in metrics:
         rows.append(
-            "| {code} | {close} | {cap} | {per} | {pbr} | {growth} | {margin} | {market_date} | {financial_period} |".format(
+            "| {code} | {close} | {previous_change} | {current_change} | {weekly_change} | {monthly_change} | {cap} | {per} | {pbr} | {growth} | {margin} | {market_date} | {financial_period} |".format(
                 code=metric.candidate_code,
                 close=_display(metric.close_price),
+                previous_change=_display(metric.previous_day_price_change_percent),
+                current_change=_display(metric.current_day_price_change_percent),
+                weekly_change=_display(metric.weekly_price_change_percent),
+                monthly_change=_display(metric.monthly_price_change_percent),
                 cap=_display(metric.market_cap),
                 per=_display(metric.per),
                 pbr=_display(metric.pbr),

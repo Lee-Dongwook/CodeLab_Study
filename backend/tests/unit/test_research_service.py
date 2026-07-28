@@ -44,6 +44,10 @@ class FakePublicDataSource:
         return DomesticMetrics(
             candidate_code=candidate.code,
             close_price=10000,
+            previous_day_price_change_percent=1.0,
+            current_day_price_change_percent=-0.5,
+            weekly_price_change_percent=3.0,
+            monthly_price_change_percent=5.0,
             market_cap=100000000,
             per=None,
             pbr=1.2,

@@ -35,8 +35,8 @@ class OpenAIReferenceResearcherTests(unittest.TestCase):
         output = {
             "sources": [{"title": "공개 자료", "publisher": "Example", "url": "https://example.test/source", "published_at": "2026-07-24"}],
             "us_market": {"trend": "상승", "background": "자동화 투자 확대", "representative_companies": ["Company (ABC)"], "representative_etfs": ["ETF (ROBO)"], "news_summary": "관련 종목이 상승", "as_of": "2026-07-24"},
-            "peers": [{"name": "Company", "ticker": "ABC", "related_business": "산업용 로봇", "connection": "협동로봇 사업", "relevance": "direct"}],
-            "asset_managers": [{"manager": "Example Asset", "etf_or_holding": "ROBO 편입", "public_view": "공개 ETF 구성", "recent_activity": "최근 구성 기준", "as_of": "2026-07-24"}],
+            "peers": [{"name": "Company", "ticker": "ABC", "related_business": "산업용 로봇", "connection": "협동로봇 사업", "relevance": "direct", "closing_news_summary": "실적 발표 후 상승", "closing_news_url": "https://example.test/news"}],
+            "asset_managers": [{"manager": "Example Asset", "market": "KR", "etf_or_holding": "국내 로봇 ETF", "public_view": "공개 ETF 구성", "recent_activity": "최근 구성 기준", "as_of": "2026-07-24", "source_url": "https://example.test/etf"}],
         }
         client = OpenAIReferenceResearcher(
             "test-key",
@@ -50,7 +50,10 @@ class OpenAIReferenceResearcherTests(unittest.TestCase):
 
         self.assertEqual(bundle.us_market.trend, "상승")
         self.assertEqual(bundle.peers[0].ticker, "ABC")
+        self.assertEqual(bundle.peers[0].closing_news_url, "https://example.test/news")
         self.assertEqual(bundle.asset_managers[0].manager, "Example Asset")
+        self.assertEqual(bundle.asset_managers[0].market, "KR")
+        self.assertEqual(bundle.asset_managers[0].source_url, "https://example.test/etf")
         self.assertEqual(bundle.us_market.sources[0].url, "https://example.test/source")
         self.assertEqual(bundle.us_market.market_snapshots[0].ticker, "ABC")
 

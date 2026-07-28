@@ -11,7 +11,11 @@ from app.data_sources.openai_theme import OpenAIThemeCandidateFinder, ThemeCandi
 from app.data_sources.openai_references import OpenAIReferenceResearcher, ReferenceBundle
 from app.models.domain import DomesticCandidate, DomesticMetrics, DomesticCompanyIdentity, NewsDisclosureItem, PriceVolumeMetrics, SourceRecord, ThemeDefinition, ThemeEvidence
 from app.models.errors import DartApiError, PublicDataUnavailableError, ThemeDefinitionUnavailableError
-from app.services.price_volume_service import calculate_price_volume_metrics
+from app.services.price_volume_service import (
+    calculate_price_volume_metrics,
+    calculate_recent_daily_change_rates,
+    calculate_recent_weekly_monthly_change_rates,
+)
 from app.services.theme_definition_service import ThemeDefinitionService
 
 
@@ -147,9 +151,15 @@ class DartCompanyResearchDataSource:
             sources.append(market.source)
             market_points = self._market_client.get_price_volume_points(candidate.code, trading_days=60)
             market_data_as_of = market_points[-1].traded_on if market_points else market.as_of
+            previous_day_price_change_percent, current_day_price_change_percent = calculate_recent_daily_change_rates(market_points)
+            weekly_price_change_percent, monthly_price_change_percent = calculate_recent_weekly_monthly_change_rates(market_points)
         except PublicDataUnavailableError:
             market = None
             market_data_as_of = None
+            previous_day_price_change_percent = None
+            current_day_price_change_percent = None
+            weekly_price_change_percent = None
+            monthly_price_change_percent = None
 
         try:
             financial = (
@@ -165,6 +175,10 @@ class DartCompanyResearchDataSource:
         return DomesticMetrics(
             candidate_code=candidate.code,
             close_price=market.close_price if market else None,
+            previous_day_price_change_percent=previous_day_price_change_percent,
+            current_day_price_change_percent=current_day_price_change_percent,
+            weekly_price_change_percent=weekly_price_change_percent,
+            monthly_price_change_percent=monthly_price_change_percent,
             market_cap=market.market_cap if market else None,
             per=market.per if market else None,
             pbr=market.pbr if market else None,

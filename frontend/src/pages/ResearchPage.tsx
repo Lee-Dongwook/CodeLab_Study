@@ -79,6 +79,7 @@ export function ResearchPage() {
           <section>
             <h2>4. 국내 정량 비교</h2>
             <MetricsTable
+              candidates={report.candidates}
               metrics={report.metrics}
               priceVolumeMetrics={report.price_volume_metrics}
             />
@@ -89,7 +90,10 @@ export function ResearchPage() {
           </section>
           <section>
             <h2>6. 최근 뉴스 및 공시</h2>
-            <NewsDisclosureSection items={report.news_disclosures} />
+            <NewsDisclosureSection
+              candidates={report.candidates}
+              items={report.news_disclosures}
+            />
           </section>
           <section>
             <h2>7. 미국 시장 선행 동향 (참고)</h2>
@@ -103,12 +107,12 @@ export function ResearchPage() {
                 <p><strong>뉴스 요약:</strong> {report.us_market_reference.news_summary}</p>
                 {report.us_market_reference.macro_indicators.length > 0 && (
                   <>
-                    <h3>미국 대표 지표: 수치·의미·국내 확인 항목</h3>
-                    <p className="caption">아래 항목은 매수·매도 지시가 아닌, 국내 장중 함께 확인할 공개 수치와 점검 항목입니다.</p>
+                    <h3>미국 대표 지표: 수치 기반 사실·의미 해석·당일 국내시장 대응 기준</h3>
+                    <p className="caption">아래 대응 기준은 매수·매도 지시가 아닌, 국내 장중 함께 확인할 공개 수치와 조건부 점검 항목입니다.</p>
                     <div className="table-scroll">
                       <table>
                         <thead>
-                          <tr><th>지표</th><th>수치 기반 사실</th><th>의미 해석</th><th>국내 장중 확인 항목</th></tr>
+                          <tr><th>지표</th><th>수치 기반 사실</th><th>의미 해석</th><th>당일 국내시장 대응 기준</th></tr>
                         </thead>
                         <tbody>
                           {report.us_market_reference.macro_indicators.map((indicator) => {
@@ -158,7 +162,7 @@ export function ResearchPage() {
               <div className="table-scroll">
                 <table>
                   <thead>
-                    <tr><th>Peer Company</th><th>관련 사업·연결 근거</th><th>관련 여부</th><th>최근 종가</th><th>일간 등락률</th><th>거래량 변화</th><th>종가 영향 뉴스</th></tr>
+                    <tr><th>Peer Company</th><th>관련 사업·연결 근거</th><th>관련 여부</th><th>최근 종가</th><th>일간 등락률</th><th>거래량 변화</th><th>종가 마감 영향 공시·뉴스</th></tr>
                   </thead>
                   <tbody>
                     {report.us_peer_companies.map((peer) => {
@@ -171,7 +175,17 @@ export function ResearchPage() {
                           <td>{snapshot?.close_price?.toLocaleString("en-US") ?? "확인 불가"}</td>
                           <td>{snapshot?.daily_change_percent == null ? "확인 불가" : `${snapshot.daily_change_percent.toFixed(2)}%`}</td>
                           <td>{snapshot?.volume_change_percent == null ? "확인 불가" : `${snapshot.volume_change_percent.toFixed(2)}%`}</td>
-                          <td>{peer.closing_news_summary}</td>
+                          <td>
+                            {peer.closing_news_summary}
+                            {peer.closing_news_url && (
+                              <>
+                                <br />
+                                <a href={peer.closing_news_url} target="_blank" rel="noreferrer">
+                                  원문 보기
+                                </a>
+                              </>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -182,11 +196,31 @@ export function ResearchPage() {
           </section>
           <section>
             <h2>9. 글로벌 운용사 동향 (참고)</h2>
-            {report.asset_manager_references.length ? <ul>{report.asset_manager_references.map((manager) => <li key={manager.manager}><strong>{manager.manager}</strong>: {manager.etf_or_holding} / {manager.public_view} / {manager.recent_activity} ({manager.as_of ?? "기준일 미확인"})</li>)}</ul> : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
+            {report.asset_manager_references.length ? (
+              <>
+                <AssetManagerList
+                  title="글로벌 운용사"
+                  managers={report.asset_manager_references.filter(
+                    (manager) => manager.market === "GLOBAL",
+                  )}
+                />
+                <AssetManagerList
+                  title="대한민국 운용사 ETF"
+                  managers={report.asset_manager_references.filter(
+                    (manager) => manager.market === "KR",
+                  )}
+                />
+              </>
+            ) : <p>확인 가능한 공개 참고자료가 없습니다.</p>}
           </section>
           <section>
             <h2>10. 참고자료 및 출처</h2>
-            <SourceList sources={report.sources} />
+            <SourceList
+              candidates={report.candidates}
+              metrics={report.metrics}
+              newsDisclosures={report.news_disclosures}
+              sources={report.sources}
+            />
           </section>
           <footer>
             <h2>안내 문구</h2>
@@ -195,5 +229,31 @@ export function ResearchPage() {
         </article>
       )}
     </main>
+  );
+}
+
+function AssetManagerList({
+  title,
+  managers,
+}: {
+  title: string;
+  managers: ResearchReport["asset_manager_references"];
+}) {
+  if (!managers.length) return null;
+
+  return (
+    <div className="asset-manager-group">
+      <h3>{title}</h3>
+      <ul>
+        {managers.map((manager) => (
+          <li key={`${manager.market}-${manager.manager}-${manager.etf_or_holding}`}>
+            <strong>{manager.manager}</strong>: {manager.etf_or_holding} / {manager.public_view} / {manager.recent_activity} ({manager.as_of ?? "기준일 미확인"})
+            {manager.source_url && (
+              <> · <a href={manager.source_url} target="_blank" rel="noreferrer">공식 ETF 자료</a></>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
