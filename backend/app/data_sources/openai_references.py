@@ -51,8 +51,10 @@ class OpenAIReferenceResearcher:
             f"국내 테마: {theme}\n국내 후보: {domestic_names}\n"
             "웹 검색으로 다음 참고 정보를 작성하라. 국내 분석을 대체하거나 투자 추천을 해서는 안 된다. "
             "전일 또는 가장 최근 미국 거래일만 사용하고 날짜를 명시한다. 근거가 불충분한 항목은 빈 배열 또는 '확인 가능한 공개자료 없음'으로 작성한다. "
-            "Peer는 미국 상장 기업만, 운용사 정보는 공개 ETF 구성·13F·공개 리포트로 확인된 경우만 포함한다. URL은 검색으로 실제 확인한 공개 페이지여야 한다."
-            "각 Peer의 종가 영향 뉴스는 당일 또는 최근 거래일 종가에 영향을 줬다고 공개 기사·공시에서 명시된 경우에만 한 줄로 요약하고, 그렇지 않으면 '확인 가능한 공개자료 없음'으로 작성한다."
+            "Peer는 미국 상장 기업만 포함한다. 운용사 정보는 글로벌 운용사와 대한민국 운용사의 공개 ETF 구성·13F·공개 리포트로 확인된 경우만 포함한다. "
+            "대한민국 운용사 ETF는 운용사의 공식 ETF 상품 또는 구성종목 페이지 URL이 있는 경우만 포함하고 market은 KR로 작성한다. URL은 검색으로 실제 확인한 공개 페이지여야 한다."
+            "각 Peer의 종가 마감 영향 공시·뉴스는 당일 또는 최근 거래일 종가에 영향을 줬다고 기업 공식 공시·보도자료, SEC 공시 또는 공개 기사에서 명시된 경우에만 한 줄로 요약한다. "
+            "closing_news_url에는 해당 원문 URL을 작성하고, 근거가 없으면 요약은 '확인 가능한 공개자료 없음', URL은 빈 문자열로 작성한다."
         )
         payload = {
             "model": self._model,
@@ -116,9 +118,23 @@ def _to_bundle(theme: str, value: dict[str, Any], sources: tuple[SourceRecord, .
                 sources,
                 snapshot,
                 str(item.get("closing_news_summary") or "확인 가능한 공개자료 없음"),
+                str(item.get("closing_news_url") or ""),
             )
         )
-    managers = tuple(AssetManagerReference(str(item["manager"]), str(item["etf_or_holding"]), str(item["public_view"]), str(item["recent_activity"]), _parse_date(item.get("as_of")), sources) for item in value.get("asset_managers", []) if item.get("manager"))
+    managers = tuple(
+        AssetManagerReference(
+            str(item["manager"]),
+            "KR" if item.get("market") == "KR" else "GLOBAL",
+            str(item["etf_or_holding"]),
+            str(item["public_view"]),
+            str(item["recent_activity"]),
+            _parse_date(item.get("as_of")),
+            str(item.get("source_url") or ""),
+            sources,
+        )
+        for item in value.get("asset_managers", [])
+        if item.get("manager")
+    )
     return ReferenceBundle(us_market, tuple(peers), managers)
 
 
@@ -172,6 +188,6 @@ def _schema() -> dict[str, Any]:
     return {"type": "object", "additionalProperties": False, "properties": {
         "sources": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"type": "object", "additionalProperties": False, "properties": {"title": {"type": "string"}, "publisher": {"type": "string"}, "url": {"type": "string"}, "published_at": {"type": "string"}}, "required": ["title", "publisher", "url", "published_at"]}},
         "us_market": {"type": "object", "additionalProperties": False, "properties": {"trend": {"type": "string"}, "background": {"type": "string"}, "representative_companies": string_array, "representative_etfs": string_array, "news_summary": {"type": "string"}, "as_of": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}}, "required": ["trend", "background", "representative_companies", "representative_etfs", "news_summary", "as_of"]},
-        "peers": {"type": "array", "maxItems": 5, "items": {"type": "object", "additionalProperties": False, "properties": {"name": {"type": "string"}, "ticker": {"type": "string"}, "related_business": {"type": "string"}, "connection": {"type": "string"}, "relevance": {"type": "string", "enum": ["direct", "indirect"]}, "closing_news_summary": {"type": "string"}}, "required": ["name", "ticker", "related_business", "connection", "relevance", "closing_news_summary"]}},
-        "asset_managers": {"type": "array", "maxItems": 5, "items": {"type": "object", "additionalProperties": False, "properties": {"manager": {"type": "string"}, "etf_or_holding": {"type": "string"}, "public_view": {"type": "string"}, "recent_activity": {"type": "string"}, "as_of": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}}, "required": ["manager", "etf_or_holding", "public_view", "recent_activity", "as_of"]}},
+        "peers": {"type": "array", "maxItems": 5, "items": {"type": "object", "additionalProperties": False, "properties": {"name": {"type": "string"}, "ticker": {"type": "string"}, "related_business": {"type": "string"}, "connection": {"type": "string"}, "relevance": {"type": "string", "enum": ["direct", "indirect"]}, "closing_news_summary": {"type": "string"}, "closing_news_url": {"type": "string"}}, "required": ["name", "ticker", "related_business", "connection", "relevance", "closing_news_summary", "closing_news_url"]}},
+        "asset_managers": {"type": "array", "maxItems": 10, "items": {"type": "object", "additionalProperties": False, "properties": {"manager": {"type": "string"}, "market": {"type": "string", "enum": ["KR", "GLOBAL"]}, "etf_or_holding": {"type": "string"}, "public_view": {"type": "string"}, "recent_activity": {"type": "string"}, "as_of": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}, "source_url": {"type": "string"}}, "required": ["manager", "market", "etf_or_holding", "public_view", "recent_activity", "as_of", "source_url"]}},
     }, "required": ["sources", "us_market", "peers", "asset_managers"]}

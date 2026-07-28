@@ -7,6 +7,39 @@ from typing import Sequence
 from app.models.domain import PriceVolumeMetrics, PriceVolumePoint
 
 
+def calculate_recent_daily_change_rates(
+    points: Sequence[PriceVolumePoint],
+) -> tuple[float | None, float | None]:
+    """최근 거래일과 그 직전 거래일의 종가 등락률을 계산한다.
+
+    반환 순서는 ``(전일, 당일)``이다. 여기서 당일은 시계열의 가장 최근
+    거래일이고, 전일은 그 직전 거래일을 뜻한다.
+    """
+    ordered = sorted(points, key=lambda point: point.traded_on)
+    current_day_change = _change_percent(ordered[-1].close_price, ordered[-2].close_price) if len(ordered) >= 2 else None
+    previous_day_change = _change_percent(ordered[-2].close_price, ordered[-3].close_price) if len(ordered) >= 3 else None
+    return previous_day_change, current_day_change
+
+
+def calculate_recent_weekly_monthly_change_rates(
+    points: Sequence[PriceVolumePoint],
+) -> tuple[float | None, float | None]:
+    """최근 5·20거래일 기준의 주간·월간 종가 등락률을 계산한다."""
+    ordered = sorted(points, key=lambda point: point.traded_on)
+    latest_price = ordered[-1].close_price if ordered else None
+    weekly_change = (
+        _change_percent(latest_price, ordered[-6].close_price)
+        if latest_price is not None and len(ordered) >= 6
+        else None
+    )
+    monthly_change = (
+        _change_percent(latest_price, ordered[-21].close_price)
+        if latest_price is not None and len(ordered) >= 21
+        else None
+    )
+    return weekly_change, monthly_change
+
+
 def calculate_price_volume_metrics(
     candidate_code: str,
     points: Sequence[PriceVolumePoint],
@@ -49,3 +82,9 @@ def calculate_price_volume_metrics(
         volume_surge=volume_surge,
         data_as_of=as_of,
     )
+
+
+def _change_percent(current_price: int | float, previous_price: int | float) -> float | None:
+    if previous_price <= 0:
+        return None
+    return ((current_price / previous_price) - 1) * 100

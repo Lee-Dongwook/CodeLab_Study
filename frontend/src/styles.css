@@ -24,6 +24,17 @@ table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e7eaf3; vertical-align: top; }
 th { white-space: nowrap; background: #f8f9fc; }
 .table-scroll { overflow-x: auto; }
+.metrics-details { margin-top: 16px; }
+.metrics-details summary { cursor: pointer; color: #2449bf; font-weight: 700; }
+.metrics-details .table-scroll { margin-top: 12px; }
+.news-disclosure-groups { display: grid; gap: 20px; }
+.news-disclosure-group + .news-disclosure-group { padding-top: 20px; border-top: 1px solid #e7eaf3; }
+.news-disclosure-group h3 { margin: 0; font-size: 1rem; }
+.asset-manager-group + .asset-manager-group { margin-top: 16px; }
+.asset-manager-group h3 { margin-bottom: 8px; font-size: 1rem; }
+.source-groups { display: grid; gap: 20px; }
+.source-group + .source-group { padding-top: 20px; border-top: 1px solid #e7eaf3; }
+.source-group h3 { margin: 0; font-size: 1rem; }
 .source-list { display: grid; gap: 10px; padding-left: 20px; }
 .source-list p { margin: 4px 0; }
 .source-list small { display: block; color: #59657e; margin-top: 4px; }

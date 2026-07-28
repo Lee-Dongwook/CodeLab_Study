@@ -72,6 +72,10 @@ class DomesticCandidate:
 class DomesticMetrics:
     candidate_code: str
     close_price: int | float | None
+    previous_day_price_change_percent: float | None
+    current_day_price_change_percent: float | None
+    weekly_price_change_percent: float | None
+    monthly_price_change_percent: float | None
     market_cap: int | float | None
     per: float | None
     pbr: float | None
@@ -166,15 +170,18 @@ class USPeerCompany:
     sources: tuple[SourceRecord, ...]
     market_snapshot: USMarketSnapshot | None = None
     closing_news_summary: str = "확인 가능한 공개자료 없음"
+    closing_news_url: str = ""
 
 
 @dataclass(frozen=True)
 class AssetManagerReference:
     manager: str
+    market: Literal["KR", "GLOBAL"]
     etf_or_holding: str
     public_view: str
     recent_activity: str
     as_of: date | None
+    source_url: str
     sources: tuple[SourceRecord, ...]
 
 
