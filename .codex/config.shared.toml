@@ -1,0 +1,31 @@
+# ── codelab 프로젝트 공유 Codex 설정 (팀 협업용) ────────────────────────────
+#
+# ⚠️ Codex CLI는 이 파일을 자동으로 읽지 않습니다.
+#    아래 두 가지 방법 중 하나로 개인 설정 위에 "얹어서" 사용하세요.
+#
+#  방법 A) 래퍼 스크립트 (권장, 설정 불필요)
+#     $ ./scripts/codex.sh          # 이 파일의 값이 -c 오버라이드로 적용됨
+#
+#  방법 B) 프로파일로 등록 (한 번만 심볼릭 링크)
+#     $ ln -sf "$PWD/.codex/config.shared.toml" ~/.codex/codelab.config.toml
+#     $ codex --profile codelab
+#
+# 개인 ~/.codex/config.toml(로그인·모델 등)은 그대로 유지되고,
+# 아래 sandbox / env 정책만 프로젝트 단위로 공유됩니다.
+# ────────────────────────────────────────────────────────────────────────────
+
+# 작업 폴더는 쓰기 허용, 그 외 경로는 읽기 전용
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+# 샌드박스 내 네트워크 접근 차단 (npm install 등은 승인 후 별도 실행)
+network_access = false
+exclude_tmpdir_env_var = false
+exclude_slash_tmp = false
+
+# 샌드박스 명령에 넘길 환경변수 정책
+[shell_environment_policy]
+# HOME/PATH/USER 등 핵심 변수만 상속
+inherit = "core"
+# 시크릿류는 이름 패턴으로 제외해 유출 방지
+exclude = ["*KEY*", "*SECRET*", "*TOKEN*", "*PASSWORD*"]
